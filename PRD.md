@@ -253,3 +253,4 @@ Todos los puntos anteriores quedan como pendientes para una versión futura.
 - Dependencia: Certificado digital de la empresa emitido por ARCA y asociado al servicio de facturación electrónica (WSFEv1).
 - Dependencia: Punto de venta habilitado en ARCA para facturación por web services (distinto del punto de venta del facturador online manual).
 - Dependencia: Entorno de homologación (testing) de ARCA para probar la integración antes de emitir comprobantes reales.
+
