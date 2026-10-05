@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatearDecimal, formatearImporte, leerDecimal } from './formato'
+import { formatearDecimal, formatearDni, formatearFecha, formatearImporte, leerDecimal, leerEnteroPositivo } from './formato'
 
 describe('formatos argentinos', () => {
   it('formatea importes con $ y 2 decimales', () => {
@@ -29,5 +29,23 @@ describe('formatos argentinos', () => {
 
   it.each(['', 'abc', '1,2,3', '12a'])('no acepta "%s"', (texto) => {
     expect(leerDecimal(texto)).toBeNull()
+  })
+
+  it.each([
+    ['3', 3],
+    [' 12 ', 12],
+    ['0', null],
+    ['-1', null],
+    ['2,5', null],
+    ['2.5', null],
+    ['', null],
+  ])('lee la cantidad "%s" como %s', (texto, esperado) => {
+    expect(leerEnteroPositivo(texto)).toBe(esperado)
+  })
+
+  it('formatea DNI y fechas', () => {
+    expect(formatearDni('23456789')).toBe('23.456.789')
+    expect(formatearDni('1234567')).toBe('1.234.567')
+    expect(formatearFecha('2026-10-05')).toBe('05/10/2026')
   })
 })

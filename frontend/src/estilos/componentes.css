@@ -230,3 +230,108 @@ a.boton {
   color: var(--color-texto-suave);
   text-align: center;
 }
+
+fieldset.tarjeta {
+  min-width: 0;
+}
+
+fieldset.tarjeta:disabled input,
+.grilla input:disabled {
+  color: var(--color-texto);
+  background: var(--color-superficie);
+}
+
+.tarjeta-titulo {
+  float: left; /* saca la legend del borde del fieldset */
+  width: 100%;
+  padding: 0;
+  margin: 0 0 var(--espacio-4);
+  font: 700 var(--texto-lg) var(--fuente-titulos);
+  color: var(--color-primario);
+}
+
+.tarjeta-titulo + * {
+  clear: both;
+}
+
+.formulario-grilla-3 {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+}
+
+.titulo-con-etiqueta {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-3);
+}
+
+.texto-secundario {
+  font-size: var(--texto-sm);
+  color: var(--color-texto-suave);
+}
+
+.celda-campo input {
+  width: 6em;
+  padding: var(--espacio-1) var(--espacio-2);
+  font: inherit;
+  text-align: right;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+}
+
+.celda-campo input[aria-invalid='true'] {
+  border-color: var(--color-error);
+}
+
+.grilla .campo-error {
+  display: block;
+  max-width: 14em;
+  margin-left: auto;
+  text-align: right;
+  white-space: normal;
+}
+
+.celda-accion {
+  width: 1%;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.celda-accion .boton {
+  padding: var(--espacio-1) var(--espacio-3);
+}
+
+.fila-total th,
+.fila-total td {
+  padding: var(--espacio-3);
+  background: none;
+  font: 700 var(--texto-lg) var(--fuente-titulos);
+  color: var(--color-primario);
+  text-align: right;
+  border-top: 2px solid var(--color-primario);
+  border-bottom: none;
+}
+
+.buscador-articulos {
+  padding: var(--espacio-4);
+  margin-bottom: var(--espacio-4);
+  background: var(--color-superficie);
+  border-radius: var(--radio);
+}
+
+.buscador-articulos .grilla {
+  background: var(--color-fondo);
+}
+
+.barra-acciones {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--espacio-4);
+}
+
+.campo-en-linea {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--espacio-2);
+  margin-bottom: 0;
+}

@@ -32,3 +32,22 @@ export function leerDecimal(texto: string): number | null {
   if (!/^-?\d+(\.\d+)?$/.test(limpio)) return null
   return Number(limpio)
 }
+
+/** Lee una cantidad entera positiva ("3"). Devuelve null si no lo es: "2,5", "0", "-1", "abc". */
+export function leerEnteroPositivo(texto: string): number | null {
+  const limpio = texto.trim()
+  if (!/^\d+$/.test(limpio)) return null
+  const valor = Number(limpio)
+  return valor > 0 ? valor : null
+}
+
+/** 23.456.789 — el DNI se guarda sin puntos y se muestra con puntos de miles. */
+export function formatearDni(dni: string): string {
+  return /^\d+$/.test(dni) ? dni.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : dni
+}
+
+/** dd/mm/aaaa, a partir de la fecha ISO que devuelve la API ("2026-10-05"). */
+export function formatearFecha(fechaIso: string): string {
+  const [anio, mes, dia] = fechaIso.split('-')
+  return `${dia}/${mes}/${anio}`
+}

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { BrowserRouter, Navigate, NavLink, Route, Routes } from 'react-router'
+import { BrowserRouter, Link, Navigate, NavLink, Route, Routes } from 'react-router'
 import { registrarAlPerderSesion } from './api'
 import { apiAcceso } from './acceso/apiAcceso'
 import { ContrasenaInicial } from './acceso/ContrasenaInicial'
@@ -9,6 +9,8 @@ import { PantallaArticulo } from './catalogo/PantallaArticulo'
 import { PantallaCatalogo } from './catalogo/PantallaCatalogo'
 import { PantallaConfiguracion } from './configuracion/PantallaConfiguracion'
 import { Layout } from './Layout'
+import { PantallaPresupuesto } from './presupuestos/PantallaPresupuesto'
+import { PantallaPresupuestos } from './presupuestos/PantallaPresupuestos'
 
 type Pantalla = 'cargando' | 'sin-conexion' | 'definir-contrasena' | 'ingreso' | 'app'
 
@@ -64,6 +66,7 @@ function AppConSesion({ alSalir }: { alSalir: () => void }) {
               <NavLink to="/" end>
                 Inicio
               </NavLink>
+              <NavLink to="/presupuestos">Presupuestos</NavLink>
               <NavLink to="/catalogo">Catálogo</NavLink>
               <NavLink to="/configuracion">Configuración</NavLink>
             </nav>
@@ -75,6 +78,9 @@ function AppConSesion({ alSalir }: { alSalir: () => void }) {
       >
         <Routes>
           <Route path="/" element={<Inicio />} />
+          <Route path="/presupuestos" element={<PantallaPresupuestos />} />
+          <Route path="/presupuestos/nuevo" element={<PantallaPresupuesto />} />
+          <Route path="/presupuestos/:numero" element={<PantallaPresupuesto />} />
           <Route path="/catalogo" element={<PantallaCatalogo />} />
           <Route path="/catalogo/nuevo" element={<PantallaArticulo />} />
           <Route path="/catalogo/:codigo" element={<PantallaArticulo />} />
@@ -91,7 +97,11 @@ function Inicio() {
     <>
       <h1>Inicio</h1>
       <section className="tarjeta">
-        <p>Sesión iniciada. La pantalla de presupuestos llega en los próximos pasos.</p>
+        <p>
+          <Link to="/presupuestos/nuevo" className="boton boton-primario">
+            Nuevo presupuesto
+          </Link>
+        </p>
       </section>
     </>
   )
