@@ -21,6 +21,11 @@ public record ClienteVista(string Apellido, string Nombre, string Dni, string? D
 public record LineaVista(int CodigoArticulo, string Descripcion, decimal PrecioUnitario, int Cantidad,
     decimal PorcentajeDescuento, decimal PrecioConDescuento, decimal PrecioFinal);
 
+public record ResumenPresupuesto(int Numero, DateOnly Fecha, string Estado, string Apellido, string Nombre, string Dni,
+    decimal Total);
+
+public record PaginaPresupuestos(IReadOnlyList<ResumenPresupuesto> Presupuestos, int Total, int Pagina, int TamanoPagina);
+
 public record PresupuestoVista(int Numero, DateOnly Fecha, string Estado, ClienteVista Cliente,
     IReadOnlyList<LineaVista> Lineas, decimal Total);
 

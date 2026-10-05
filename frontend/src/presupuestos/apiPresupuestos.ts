@@ -40,7 +40,38 @@ export type DatosPresupuesto = {
   estado?: EstadoPresupuesto
 }
 
+export type ResumenPresupuesto = {
+  numero: number
+  fecha: string
+  estado: EstadoPresupuesto
+  apellido: string
+  nombre: string
+  dni: string
+  total: number
+}
+
+export type PaginaPresupuestos = {
+  presupuestos: ResumenPresupuesto[]
+  total: number
+  pagina: number
+  tamanoPagina: number
+}
+
+/** Filtros de RF-03; los vacíos no se envían. Fechas en formato ISO (aaaa-mm-dd). */
+export type FiltrosPresupuestos = {
+  desde?: string
+  hasta?: string
+  apellido?: string
+  nombre?: string
+  dni?: string
+  pagina?: string
+}
+
 export const apiPresupuestos = {
+  buscar: (filtros: FiltrosPresupuestos) => {
+    const parametros = new URLSearchParams(Object.entries(filtros).filter(([, v]) => v) as [string, string][])
+    return pedir<PaginaPresupuestos>(`/api/presupuestos?${parametros}`)
+  },
   obtener: (numero: number) => pedir<Presupuesto>(`/api/presupuestos/${numero}`),
   crear: (datos: DatosPresupuesto) =>
     pedir<Presupuesto>('/api/presupuestos', { method: 'POST', body: JSON.stringify(datos) }),

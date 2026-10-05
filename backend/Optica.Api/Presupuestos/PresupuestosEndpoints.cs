@@ -6,11 +6,57 @@ namespace Optica.Api.Presupuestos;
 
 public static class PresupuestosEndpoints
 {
+    public const int TamanoPagina = 50;
+
     private static readonly TimeZoneInfo HoraArgentina = TimeZoneInfo.FindSystemTimeZoneById("America/Argentina/Buenos_Aires");
 
     public static void MapPresupuestos(this IEndpointRouteBuilder app)
     {
         var grupo = app.MapGroup("/api/presupuestos");
+
+        // RF-03: busca por fecha y datos del cliente. Los filtros se combinan con "Y" (RF-81).
+        grupo.MapGet("/", async (string? desde, string? hasta, string? apellido, string? nombre, string? dni, int? pagina,
+            OpticaDbContext db) =>
+        {
+            var errores = new Dictionary<string, string[]>();
+            var fechaDesde = LeerFecha(desde, "desde", errores);
+            var fechaHasta = LeerFecha(hasta, "hasta", errores);
+            if (fechaDesde > fechaHasta)
+                errores["hasta"] = ["La fecha Hasta no puede ser anterior a la fecha Desde"];
+            var dniBuscado = Cliente.SoloDigitos(dni ?? "");
+            if (!string.IsNullOrWhiteSpace(dni) && dniBuscado == "")
+                errores["dni"] = ["Ingresá solo los números del DNI, con o sin puntos"];
+            if (errores.Count > 0)
+                return Results.ValidationProblem(errores);
+
+            var consulta = db.Presupuestos.AsNoTracking();
+            // RF-83: rango inclusive, con uno solo de los dos límites si se quiere.
+            if (fechaDesde is { } d)
+                consulta = consulta.Where(p => p.Fecha >= d);
+            if (fechaHasta is { } h)
+                consulta = consulta.Where(p => p.Fecha <= h);
+            // RF-82: coincidencia parcial sin mayúsculas ni acentos, sobre las columnas normalizadas.
+            var apellidoBuscado = TextoBusqueda.Normalizar(apellido);
+            if (apellidoBuscado != "")
+                consulta = consulta.Where(p => p.Cliente.ApellidoBusqueda.Contains(apellidoBuscado));
+            var nombreBuscado = TextoBusqueda.Normalizar(nombre);
+            if (nombreBuscado != "")
+                consulta = consulta.Where(p => p.Cliente.NombreBusqueda.Contains(nombreBuscado));
+            // RF-88: coincidencia parcial ignorando puntos y guiones (el DNI se guarda solo con dígitos).
+            if (dniBuscado != "")
+                consulta = consulta.Where(p => p.Cliente.Dni.Contains(dniBuscado));
+
+            var numeroPagina = Math.Max(pagina ?? 1, 1);
+            var total = await consulta.CountAsync();
+            var presupuestos = await consulta
+                .OrderByDescending(p => p.Numero)
+                .Skip((numeroPagina - 1) * TamanoPagina).Take(TamanoPagina)
+                .Select(p => new ResumenPresupuesto(p.Numero, p.Fecha, p.Estado.ToString(), p.Cliente.Apellido,
+                    p.Cliente.Nombre, p.Cliente.Dni, p.Total))
+                .ToListAsync();
+
+            return Results.Ok(new PaginaPresupuestos(presupuestos, total, numeroPagina, TamanoPagina));
+        });
 
         grupo.MapGet("/{numero:int}", async (int numero, OpticaDbContext db) =>
             await db.Presupuestos.AsNoTracking().Include(p => p.Lineas).SingleOrDefaultAsync(p => p.Numero == numero) is { } presupuesto
@@ -65,6 +111,16 @@ public static class PresupuestosEndpoints
 
             return Results.Ok(AVista(presupuesto));
         });
+    }
+
+    private static DateOnly? LeerFecha(string? texto, string campo, Dictionary<string, string[]> errores)
+    {
+        if (string.IsNullOrWhiteSpace(texto))
+            return null;
+        if (DateOnly.TryParseExact(texto, "yyyy-MM-dd", out var fecha))
+            return fecha;
+        errores[campo] = ["Ingresá una fecha válida (dd/mm/aaaa)"];
+        return null;
     }
 
     private static Cliente CrearCliente(DatosCliente c) =>

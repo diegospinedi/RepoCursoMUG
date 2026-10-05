@@ -335,3 +335,41 @@ fieldset.tarjeta:disabled input,
   gap: var(--espacio-2);
   margin-bottom: 0;
 }
+
+.filtros-busqueda {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr));
+  column-gap: var(--espacio-4);
+}
+
+.acciones-encabezado {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-3);
+}
+
+.abrir-numero {
+  display: flex;
+  gap: var(--espacio-2);
+}
+
+.abrir-numero input {
+  width: 6em;
+  padding: var(--espacio-2) var(--espacio-3);
+  font: inherit;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+}
+
+.abrir-numero input[aria-invalid='true'] {
+  border-color: var(--color-error);
+}
+
+.visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
