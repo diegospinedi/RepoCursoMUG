@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/backend/">
+    <Project Path="backend/Optica.Api/Optica.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Optica.Tests/Optica.Tests.csproj" />
+  </Folder>
+</Solution>

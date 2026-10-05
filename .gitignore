@@ -1,0 +1,23 @@
+# .NET
+bin/
+obj/
+*.user
+.vs/
+
+# Base SQLite: guarda datos personales de clientes, nunca va al repo
+*.db
+*.db-shm
+*.db-wal
+
+# Certificado y claves de ARCA: se resguardan fuera del repo (RF-64)
+*.pfx
+*.p12
+*.key
+*.crt
+*.pem
+*.csr
+
+# Secretos locales
+appsettings.*.local.json
+.env
+.env.*
