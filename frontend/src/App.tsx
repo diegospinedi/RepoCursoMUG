@@ -5,6 +5,8 @@ import { apiAcceso } from './acceso/apiAcceso'
 import { ContrasenaInicial } from './acceso/ContrasenaInicial'
 import { Ingreso } from './acceso/Ingreso'
 import { useInactividad } from './acceso/useInactividad'
+import { PantallaArticulo } from './catalogo/PantallaArticulo'
+import { PantallaCatalogo } from './catalogo/PantallaCatalogo'
 import { PantallaConfiguracion } from './configuracion/PantallaConfiguracion'
 import { Layout } from './Layout'
 
@@ -62,6 +64,7 @@ function AppConSesion({ alSalir }: { alSalir: () => void }) {
               <NavLink to="/" end>
                 Inicio
               </NavLink>
+              <NavLink to="/catalogo">Catálogo</NavLink>
               <NavLink to="/configuracion">Configuración</NavLink>
             </nav>
             <button type="button" className="boton" onClick={salir}>
@@ -72,6 +75,9 @@ function AppConSesion({ alSalir }: { alSalir: () => void }) {
       >
         <Routes>
           <Route path="/" element={<Inicio />} />
+          <Route path="/catalogo" element={<PantallaCatalogo />} />
+          <Route path="/catalogo/nuevo" element={<PantallaArticulo />} />
+          <Route path="/catalogo/:codigo" element={<PantallaArticulo />} />
           <Route path="/configuracion" element={<PantallaConfiguracion />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
@@ -85,7 +91,7 @@ function Inicio() {
     <>
       <h1>Inicio</h1>
       <section className="tarjeta">
-        <p>Sesión iniciada. Las pantallas de catálogo y presupuestos llegan en los próximos pasos.</p>
+        <p>Sesión iniciada. La pantalla de presupuestos llega en los próximos pasos.</p>
       </section>
     </>
   )

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Optica.Api.Acceso;
+using Optica.Api.Catalogo;
 using Optica.Api.Configuracion;
 using Optica.Api.Datos;
 
@@ -58,5 +59,6 @@ app.UseAuthorization();
 
 app.MapAcceso();
 app.MapConfiguracion();
+app.MapArticulos();
 
 app.Run();

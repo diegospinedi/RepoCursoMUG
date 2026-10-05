@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Optica.Api.Catalogo;
 using Optica.Api.Configuracion;
 
 namespace Optica.Api.Datos;
@@ -7,6 +8,7 @@ public class OpticaDbContext(DbContextOptions<OpticaDbContext> options) : DbCont
 {
     public DbSet<Acceso.Acceso> Accesos => Set<Acceso.Acceso>();
     public DbSet<ParametrosNegocio> Parametros => Set<ParametrosNegocio>();
+    public DbSet<Articulo> Articulos => Set<Articulo>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -31,6 +33,17 @@ public class OpticaDbContext(DbContextOptions<OpticaDbContext> options) : DbCont
                 TopeIdentificacion = 10_000_000m,
                 MultiploRedondeo = 0.01m,
             });
+        });
+
+        modelBuilder.Entity<Articulo>(e =>
+        {
+            e.HasKey(a => a.Codigo);
+            e.Property(a => a.Codigo).ValueGeneratedOnAdd();
+            e.Property(a => a.CodigoProveedor).HasMaxLength(Catalogo.ArticulosEndpoints.LargoMaximoCodigoProveedor);
+            e.Property(a => a.Descripcion).HasMaxLength(Catalogo.ArticulosEndpoints.LargoMaximoDescripcion);
+            // La actualización por planilla (RF-47) busca por código en el proveedor.
+            e.HasIndex(a => a.CodigoProveedor);
+            e.HasIndex(a => a.Descripcion);
         });
     }
 }
