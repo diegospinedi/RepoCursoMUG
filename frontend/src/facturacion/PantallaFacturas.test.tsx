@@ -43,6 +43,10 @@ describe('facturas emitidas', () => {
     expect(within(fila).getByText(/1\.815,00/)).toBeInTheDocument()
     expect(within(fila).getByText('76123456789012')).toBeInTheDocument()
     expect(within(fila).getByRole('link', { name: '155' })).toHaveAttribute('href', '/presupuestos/155')
+    expect(within(fila).getByRole('link', { name: 'Descargar PDF de la factura B 0003-00034561' })).toHaveAttribute(
+      'href',
+      '/api/presupuestos/155/factura/pdf',
+    )
   })
 
   it('AC-32: no ofrece acciones de edición ni eliminación', async () => {

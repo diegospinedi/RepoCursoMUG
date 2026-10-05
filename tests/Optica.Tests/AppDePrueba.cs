@@ -29,6 +29,11 @@ public class AppDePrueba : WebApplicationFactory<Program>
         builder.UseSetting("ConnectionStrings:Optica", $"Data Source={_rutaBase};Pooling=False");
         builder.UseSetting("Arca:Simulador:Archivo", _rutaArca);
         builder.UseSetting("Arca:TiempoEsperaSegundos", "1");
+        builder.UseSetting("Emisor:RazonSocial", "Óptica Sistema SRL");
+        builder.UseSetting("Emisor:Domicilio", "Calle 42 nº 767, La Plata");
+        builder.UseSetting("Emisor:Cuit", "30712345671");
+        builder.UseSetting("Emisor:IngresosBrutos", "30-71234567-1");
+        builder.UseSetting("Emisor:InicioActividades", "01/03/2010");
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<TimeProvider>();

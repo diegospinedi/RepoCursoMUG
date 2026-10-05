@@ -124,5 +124,9 @@ describe('facturación del presupuesto', () => {
     expect(screen.getByText('Factura B 0003-00034561')).toBeInTheDocument()
     expect(screen.getByText('76123456789012')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Facturar/ })).not.toBeInTheDocument()
+    // AC-19
+    const pdf = screen.getByRole('link', { name: 'Descargar PDF de la factura' })
+    expect(pdf).toHaveAttribute('href', '/api/presupuestos/155/factura/pdf')
+    expect(pdf).toHaveAttribute('download')
   })
 })

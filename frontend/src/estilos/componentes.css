@@ -419,3 +419,9 @@ fieldset.tarjeta:disabled input,
   align-items: center;
   gap: var(--espacio-4);
 }
+
+.datos-factura-accion {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}

@@ -91,6 +91,20 @@ public static class FacturacionEndpoints
                 : Results.Ok(AVista(factura, presupuesto));
         });
 
+        // RF-50: PDF de la factura con los datos de RF-30 y el QR de ARCA (AC-19).
+        grupo.MapGet("/pdf", async (int numero, OpticaDbContext db, OpcionesEmisor emisor, OpcionesArca arca) =>
+        {
+            var presupuesto = await db.Presupuestos.AsNoTracking().Include(p => p.Lineas).SingleOrDefaultAsync(p => p.Numero == numero);
+            var factura = presupuesto is null ? null
+                : await db.Facturas.AsNoTracking().SingleOrDefaultAsync(f => f.PresupuestoId == presupuesto.Id);
+            if (presupuesto is null || factura is null)
+                return Results.Problem($"El presupuesto {numero} no tiene factura.", statusCode: StatusCodes.Status404NotFound);
+
+            var pdf = PdfFactura.Generar(factura, presupuesto, emisor, simulado: arca.Entorno == EntornoArca.Simulado);
+            return Results.File(pdf, "application/pdf",
+                $"Factura-{Factura.Letra(factura.Tipo)}-{Factura.FormatearNumero(factura.PuntoVenta, factura.Numero)}.pdf");
+        });
+
         // RF-25: factura el presupuesto. También es el reintento (RF-52).
         grupo.MapPost("/", async (int numero, OpticaDbContext db, ServicioFacturacion servicio, CancellationToken cancelacion) =>
         {

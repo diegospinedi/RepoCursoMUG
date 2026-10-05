@@ -23,6 +23,8 @@ builder.Services.AddDbContext<OpticaDbContext>(options =>
 builder.Services.AddScoped<ServicioAcceso>();
 builder.Services.AddArca();
 builder.Services.AddScoped<ServicioFacturacion>();
+builder.Services.AddSingleton(sp =>
+    sp.GetRequiredService<IConfiguration>().GetSection("Emisor").Get<OpcionesEmisor>() ?? new OpcionesEmisor());
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>

@@ -145,6 +145,7 @@ export function PantallaFacturas() {
                       <th className="numero">Total</th>
                       <th>CAE</th>
                       <th className="numero">Presupuesto</th>
+                      <th aria-label="PDF" />
                     </tr>
                   </thead>
                   <tbody>
@@ -164,6 +165,16 @@ export function PantallaFacturas() {
                         <td className="numero-tabular">{f.cae}</td>
                         <td className="numero">
                           <Link to={`/presupuestos/${f.numeroPresupuesto}`}>{f.numeroPresupuesto}</Link>
+                        </td>
+                        <td className="celda-accion">
+                          <a
+                            className="boton"
+                            href={`/api/presupuestos/${f.numeroPresupuesto}/factura/pdf`}
+                            download
+                            aria-label={`Descargar PDF de la factura ${f.letra} ${f.comprobante}`}
+                          >
+                            PDF
+                          </a>
                         </td>
                       </tr>
                     ))}

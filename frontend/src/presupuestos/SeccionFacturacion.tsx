@@ -95,6 +95,12 @@ export function SeccionFacturacion({ presupuesto, alFacturar }: { presupuesto: P
             <dt>CAE</dt>
             <dd className="numero-tabular">{factura.cae}</dd>
           </div>
+          <div className="datos-factura-accion">
+            {/* RF-50, AC-19 */}
+            <a className="boton boton-primario" href={`/api/presupuestos/${presupuesto.numero}/factura/pdf`} download>
+              Descargar PDF de la factura
+            </a>
+          </div>
         </dl>
       ) : (
         <>
