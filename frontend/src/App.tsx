@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Layout } from './Layout'
 
 function App() {
   const [estadoApi, setEstadoApi] = useState('consultando...')
@@ -11,10 +12,10 @@ function App() {
   }, [])
 
   return (
-    <main>
-      <h1>Óptica Sistema</h1>
+    <Layout>
+      <h1>Inicio</h1>
       <p>API: {estadoApi}</p>
-    </main>
+    </Layout>
   )
 }
 

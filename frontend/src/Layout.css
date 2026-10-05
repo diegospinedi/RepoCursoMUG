@@ -1,0 +1,30 @@
+body {
+  margin: 0;
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  background: var(--color-fondo);
+  color: #1a1a1a;
+}
+
+.layout-encabezado {
+  display: flex;
+  align-items: center;
+  padding: 8px 24px;
+  background: var(--color-fondo);
+  border-bottom: 4px solid var(--color-primario);
+}
+
+.layout-logo {
+  height: 72px;
+  width: auto;
+}
+
+.layout-contenido {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+h1,
+h2 {
+  color: var(--color-primario);
+}
