@@ -21,3 +21,7 @@ obj/
 appsettings.*.local.json
 .env
 .env.*
+
+# Comprobantes del simulador de ARCA (solo desarrollo)
+arca-simulado*.json
+arca-simulado*.json.tmp

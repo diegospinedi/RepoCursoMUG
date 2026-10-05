@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Optica.Api.Acceso;
+using Optica.Api.Arca;
 using Optica.Api.Catalogo;
 using Optica.Api.Configuracion;
 using Optica.Api.Datos;
@@ -19,6 +20,7 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddDbContext<OpticaDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("Optica")));
 builder.Services.AddScoped<ServicioAcceso>();
+builder.Services.AddArca();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -53,6 +55,9 @@ builder.Services.AddAuthorizationBuilder()
     .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
 
 var app = builder.Build();
+
+// Falla al arrancar si la configuración de ARCA no es válida, en lugar de hacerlo al facturar.
+app.Services.GetRequiredService<IServicioArca>();
 
 // WAL: las lecturas no bloquean a quien graba y viceversa (RNF-13). Queda guardado en el archivo de la base.
 using (var scope = app.Services.CreateScope())

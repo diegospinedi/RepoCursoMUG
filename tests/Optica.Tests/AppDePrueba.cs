@@ -18,6 +18,7 @@ namespace Optica.Tests;
 public class AppDePrueba : WebApplicationFactory<Program>
 {
     private readonly string _rutaBase = Path.Combine(Path.GetTempPath(), $"optica-test-{Guid.NewGuid():N}.db");
+    private readonly string _rutaArca = Path.Combine(Path.GetTempPath(), $"arca-simulado-test-{Guid.NewGuid():N}.json");
 
     public FakeTimeProvider Reloj { get; } = new(DateTimeOffset.UtcNow);
     public IPAddress IpOrigen { get; set; } = IPAddress.Loopback;
@@ -25,6 +26,7 @@ public class AppDePrueba : WebApplicationFactory<Program>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseSetting("ConnectionStrings:Optica", $"Data Source={_rutaBase};Pooling=False");
+        builder.UseSetting("Arca:Simulador:Archivo", _rutaArca);
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<TimeProvider>();
@@ -59,6 +61,7 @@ public class AppDePrueba : WebApplicationFactory<Program>
     {
         base.Dispose(disposing);
         File.Delete(_rutaBase);
+        File.Delete(_rutaArca);
     }
 
     private class FiltroIpOrigen(Func<IPAddress> ip) : IStartupFilter
