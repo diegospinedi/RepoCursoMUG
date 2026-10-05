@@ -41,7 +41,9 @@ describe('pantalla de configuración', () => {
 
   it('graba los valores escritos con coma decimal (AC-49)', async () => {
     const fetch = vi.fn((_: string, opciones?: RequestInit) =>
-      opciones?.method === 'PUT' ? json(200, JSON.parse(opciones.body as string)) : json(200, guardada),
+      opciones?.method === 'PUT'
+        ? json(200, { ...JSON.parse(opciones.body as string), preciosActualizados: 0 })
+        : json(200, guardada),
     )
     vi.stubGlobal('fetch', fetch)
     render(<PantallaConfiguracion />)
@@ -75,5 +77,24 @@ describe('pantalla de configuración', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
 
     await waitFor(() => expect(screen.getByText(mensaje)).toBeInTheDocument())
+  })
+
+  it('informa cuántos precios del catálogo se recalcularon (RF-86)', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((_: string, opciones?: RequestInit) =>
+        opciones?.method === 'PUT'
+          ? json(200, { ...JSON.parse(opciones.body as string), preciosActualizados: 37 })
+          : json(200, guardada),
+      ),
+    )
+    render(<PantallaConfiguracion />)
+
+    fireEvent.change(await screen.findByLabelText('Múltiplo de redondeo comercial ($)'), { target: { value: '50' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+
+    expect(
+      await screen.findByText('Configuración guardada. Se actualizó el precio de venta de 37 artículos del catálogo.'),
+    ).toBeInTheDocument()
   })
 })

@@ -9,6 +9,14 @@ public record DatosConfiguracion(
     decimal? TopeIdentificacion,
     decimal? MultiploRedondeo);
 
+/// <summary>Respuesta al grabar: la configuración y cuántos precios de venta cambiaron (RF-86).</summary>
+public record ConfiguracionGrabada(
+    decimal AlicuotaIva,
+    string CondicionFiscal,
+    decimal TopeIdentificacion,
+    decimal MultiploRedondeo,
+    int PreciosActualizados);
+
 public static class ConfiguracionEndpoints
 {
     public const decimal MultiploMinimo = 0.01m;
@@ -26,13 +34,33 @@ public static class ConfiguracionEndpoints
                 return Results.ValidationProblem(errores);
 
             var parametros = await db.Parametros.SingleAsync();
+            var afectaPrecios = parametros.AlicuotaIva != datos.AlicuotaIva
+                || parametros.CondicionFiscal != condicion
+                || parametros.MultiploRedondeo != datos.MultiploRedondeo;
+
             parametros.AlicuotaIva = datos.AlicuotaIva!.Value;
             parametros.CondicionFiscal = condicion;
             parametros.TopeIdentificacion = datos.TopeIdentificacion!.Value;
             parametros.MultiploRedondeo = datos.MultiploRedondeo!.Value;
+
+            // RF-86: el catálogo se recalcula en la misma transacción que el cambio de
+            // configuración, así nunca quedan precios calculados con parámetros viejos.
+            // Las líneas de presupuestos guardan su propio precio y no se tocan (RF-87).
+            var preciosActualizados = 0;
+            if (afectaPrecios)
+            {
+                await foreach (var articulo in db.Articulos.AsAsyncEnumerable())
+                {
+                    var anterior = articulo.PrecioVenta;
+                    articulo.RecalcularPrecioVenta(parametros);
+                    if (articulo.PrecioVenta != anterior)
+                        preciosActualizados++;
+                }
+            }
             await db.SaveChangesAsync();
 
-            return Results.Ok(ADatos(parametros));
+            return Results.Ok(new ConfiguracionGrabada(parametros.AlicuotaIva, parametros.CondicionFiscal.ToString(),
+                parametros.TopeIdentificacion, parametros.MultiploRedondeo, preciosActualizados));
         });
     }
 

@@ -47,6 +47,13 @@ function validar(f: Formulario): { errores: ErroresDeCampo; datos?: Configuracio
   }
 }
 
+function textoGrabada(preciosActualizados: number) {
+  if (preciosActualizados === 0) return 'Configuración guardada.'
+  return preciosActualizados === 1
+    ? 'Configuración guardada. Se actualizó el precio de venta de 1 artículo del catálogo.'
+    : `Configuración guardada. Se actualizó el precio de venta de ${preciosActualizados} artículos del catálogo.`
+}
+
 export function PantallaConfiguracion() {
   const [formulario, setFormulario] = useState<Formulario>()
   const [errores, setErrores] = useState<ErroresDeCampo>({})
@@ -75,8 +82,9 @@ export function PantallaConfiguracion() {
 
     setGrabando(true)
     try {
-      setFormulario(aFormulario(await apiConfiguracion.grabar(datos)))
-      setAviso({ tipo: 'exito', texto: 'Configuración guardada.' })
+      const grabada = await apiConfiguracion.grabar(datos)
+      setFormulario(aFormulario(grabada))
+      setAviso({ tipo: 'exito', texto: textoGrabada(grabada.preciosActualizados) })
     } catch (e) {
       if (e instanceof ErrorApi && Object.keys(e.errores).length > 0) setErrores(e.errores)
       else setAviso({ tipo: 'error', texto: 'No se pudo guardar la configuración. Volvé a intentar.' })
@@ -118,6 +126,10 @@ export function PantallaConfiguracion() {
       {formulario && (
         <form className="tarjeta" onSubmit={grabar} noValidate>
           <h2>Parámetros de facturación y precios</h2>
+          <p className="campo-ayuda">
+            Al cambiar la condición fiscal, la alícuota o el múltiplo de redondeo, el sistema recalcula el precio de
+            venta de todo el catálogo. Los presupuestos ya grabados conservan sus precios.
+          </p>
           <div className="formulario-grilla">
             <div className="campo">
               <label htmlFor="condicionFiscal">Condición fiscal</label>
