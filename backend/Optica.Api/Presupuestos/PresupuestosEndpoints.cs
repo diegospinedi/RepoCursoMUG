@@ -13,20 +13,24 @@ public static class PresupuestosEndpoints
         var grupo = app.MapGroup("/api/presupuestos");
 
         grupo.MapGet("/{numero:int}", async (int numero, OpticaDbContext db) =>
-            await db.Presupuestos.AsNoTracking().SingleOrDefaultAsync(p => p.Numero == numero) is { } presupuesto
+            await db.Presupuestos.AsNoTracking().Include(p => p.Lineas).SingleOrDefaultAsync(p => p.Numero == numero) is { } presupuesto
                 ? Results.Ok(AVista(presupuesto))
                 : Results.Problem($"No existe el presupuesto {numero}.", statusCode: StatusCodes.Status404NotFound));
 
         grupo.MapPost("/", async (DatosPresupuesto datos, OpticaDbContext db, TimeProvider reloj) =>
         {
-            if (ValidacionPresupuesto.Validar(datos) is { Count: > 0 } errores)
+            var errores = ValidacionPresupuesto.Validar(datos);
+            await ValidarArticulosExistentesAsync(db, datos, errores);
+            if (errores.Count > 0)
                 return Results.ValidationProblem(errores);
 
             var c = datos.Cliente!;
             var cliente = Cliente.Crear(c.Apellido!, c.Nombre!, c.Dni!, c.Domicilio, c.Email, c.Telefono);
+            var lineas = datos.Lineas!.Select((l, i) => new LineaPresupuesto(i + 1, l!.CodigoArticulo!.Value, l.Descripcion!,
+                l.PrecioUnitario!.Value, (int)l.Cantidad!.Value, l.PorcentajeDescuento!.Value)).ToList();
             var fecha = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(reloj.GetUtcNow(), HoraArgentina).DateTime);
 
-            var presupuesto = await GrabarConNumeroNuevoAsync(db, numero => new Presupuesto(numero, fecha, cliente));
+            var presupuesto = await GrabarConNumeroNuevoAsync(db, numero => new Presupuesto(numero, fecha, cliente, lineas));
             return Results.Created($"/api/presupuestos/{presupuesto.Numero}", AVista(presupuesto));
         });
     }
@@ -62,6 +66,24 @@ public static class PresupuestosEndpoints
         }
     }
 
+    /// <summary>Cada línea tiene que corresponder a un artículo del catálogo (RF-10, RF-11).</summary>
+    private static async Task ValidarArticulosExistentesAsync(OpticaDbContext db, DatosPresupuesto datos,
+        Dictionary<string, string[]> errores)
+    {
+        if (datos.Lineas is null)
+            return;
+        var codigos = datos.Lineas.Where(l => l?.CodigoArticulo is not null).Select(l => l!.CodigoArticulo!.Value).Distinct().ToList();
+        var existentes = await db.Articulos.Where(a => codigos.Contains(a.Codigo)).Select(a => a.Codigo).ToListAsync();
+        for (var i = 0; i < datos.Lineas.Count; i++)
+        {
+            if (datos.Lineas[i]?.CodigoArticulo is { } codigo && !existentes.Contains(codigo))
+                errores[$"lineas[{i}].codigoArticulo"] = [$"El artículo {codigo} no existe en el catálogo: elegí otro"];
+        }
+    }
+
     private static PresupuestoVista AVista(Presupuesto p) => new(p.Numero, p.Fecha, p.Estado.ToString(),
-        new ClienteVista(p.Cliente.Apellido, p.Cliente.Nombre, p.Cliente.Dni, p.Cliente.Domicilio, p.Cliente.Email, p.Cliente.Telefono));
+        new ClienteVista(p.Cliente.Apellido, p.Cliente.Nombre, p.Cliente.Dni, p.Cliente.Domicilio, p.Cliente.Email, p.Cliente.Telefono),
+        p.Lineas.OrderBy(l => l.Orden).Select(l => new LineaVista(l.CodigoArticulo, l.Descripcion, l.PrecioUnitario,
+            l.Cantidad, l.PorcentajeDescuento, l.PrecioConDescuento, l.PrecioFinal)).ToList(),
+        p.Total);
 }

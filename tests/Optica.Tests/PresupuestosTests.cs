@@ -10,7 +10,15 @@ public class PresupuestosTests : IAsyncLifetime
     private readonly AppDePrueba _app = new();
     private HttpClient _cliente = null!;
 
-    public async Task InitializeAsync() => _cliente = await _app.ClienteConSesionAsync();
+    private int _articulo;
+
+    public async Task InitializeAsync()
+    {
+        _cliente = await _app.ClienteConSesionAsync();
+        var respuesta = await _cliente.PostAsJsonAsync("/api/articulos",
+            new { codigoProveedor = "ABC-1", descripcion = "Armazón acetato negro", precioCosto = 1210m, margenUtilidad = 50m });
+        _articulo = (await respuesta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("codigo").GetInt32();
+    }
 
     public Task DisposeAsync()
     {
@@ -18,9 +26,14 @@ public class PresupuestosTests : IAsyncLifetime
         return Task.CompletedTask;
     }
 
-    private static object Datos(string? apellido = "González", string? nombre = "María", string? dni = "23.456.789",
-        string? domicilio = "Calle 42 nº 767, La Plata", string? email = "maria@example.com", string? telefono = "221 555-1234") =>
-        new { cliente = new { apellido, nombre, dni, domicilio, email, telefono } };
+    private object Datos(string? apellido = "González", string? nombre = "María", string? dni = "23.456.789",
+        string? domicilio = "Calle 42 nº 767, La Plata", string? email = "maria@example.com", string? telefono = "221 555-1234",
+        object[]? lineas = null) =>
+        new { cliente = new { apellido, nombre, dni, domicilio, email, telefono }, lineas = lineas ?? [Linea()] };
+
+    private object Linea(decimal? precioUnitario = 1815m, decimal? cantidad = 1m, decimal? porcentajeDescuento = 0m,
+        int? codigoArticulo = null) =>
+        new { codigoArticulo = codigoArticulo ?? _articulo, descripcion = "Armazón acetato negro", precioUnitario, cantidad, porcentajeDescuento };
 
     private Task<HttpResponseMessage> Grabar(object datos) => _cliente.PostAsJsonAsync("/api/presupuestos", datos);
 
@@ -80,7 +93,7 @@ public class PresupuestosTests : IAsyncLifetime
         _app.ConBase(db =>
         {
             db.Presupuestos.Add(new Presupuesto(154, new DateOnly(2026, 10, 1),
-                Cliente.Crear("Pérez", "Juan", "30111222", null, null, null)));
+                Cliente.Crear("Pérez", "Juan", "30111222", null, null, null), [new LineaPresupuesto(1, 1, "Estuche", 4500m, 1, 0m)]));
             return db.SaveChanges();
         });
 
@@ -184,5 +197,114 @@ public class PresupuestosTests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.Unauthorized, lectura.StatusCode);
         Assert.DoesNotContain("González", await lectura.Content.ReadAsStringAsync());
         Assert.Equal(HttpStatusCode.Unauthorized, (await anonimo.PostAsJsonAsync("/api/presupuestos", Datos())).StatusCode);
+    }
+
+    [Fact]
+    public async Task AC24_AC25_guarda_las_lineas_con_sus_siete_campos()
+    {
+        var grabado = await GrabarOk(Datos(lineas: [Linea(1000m, 3m, 10m)]));
+
+        var leido = await _cliente.GetFromJsonAsync<JsonElement>($"/api/presupuestos/{grabado.GetProperty("numero").GetInt32()}");
+        var linea = Assert.Single(leido.GetProperty("lineas").EnumerateArray());
+        Assert.Equal(_articulo, linea.GetProperty("codigoArticulo").GetInt32());
+        Assert.Equal("Armazón acetato negro", linea.GetProperty("descripcion").GetString());
+        Assert.Equal(1000m, linea.GetProperty("precioUnitario").GetDecimal());
+        Assert.Equal(3, linea.GetProperty("cantidad").GetInt32());
+        Assert.Equal(10m, linea.GetProperty("porcentajeDescuento").GetDecimal());
+        Assert.Equal(900.00m, linea.GetProperty("precioConDescuento").GetDecimal());
+        Assert.Equal(2700.00m, linea.GetProperty("precioFinal").GetDecimal());
+        Assert.Equal(2700.00m, leido.GetProperty("total").GetDecimal());
+    }
+
+    [Fact]
+    public async Task AC11_el_total_suma_los_precios_finales_ya_redondeados()
+    {
+        var grabado = await GrabarOk(Datos(lineas: [Linea(6.67m, 3m, 50m), Linea(1000m, 3m, 10m)]));
+
+        var lineas = grabado.GetProperty("lineas").EnumerateArray().ToList();
+        Assert.Equal(3.34m, lineas[0].GetProperty("precioConDescuento").GetDecimal());
+        Assert.Equal(10.02m, lineas[0].GetProperty("precioFinal").GetDecimal());
+        Assert.Equal(2710.02m, grabado.GetProperty("total").GetDecimal());
+    }
+
+    [Fact]
+    public async Task Conserva_el_orden_de_las_lineas()
+    {
+        var grabado = await GrabarOk(Datos(lineas: [Linea(30m), Linea(10m), Linea(20m)]));
+
+        Assert.Equal([30m, 10m, 20m],
+            grabado.GetProperty("lineas").EnumerateArray().Select(l => l.GetProperty("precioUnitario").GetDecimal()));
+    }
+
+    [Fact]
+    public async Task Ignora_los_importes_calculados_que_mande_la_pantalla()
+    {
+        var linea = new { codigoArticulo = _articulo, descripcion = "Armazón", precioUnitario = 1000m, cantidad = 2m,
+            porcentajeDescuento = 0m, precioConDescuento = 1m, precioFinal = 1m };
+
+        var grabado = await GrabarOk(Datos(lineas: [linea]));
+
+        Assert.Equal(2000.00m, grabado.GetProperty("total").GetDecimal());
+    }
+
+    [Fact]
+    public async Task AC86_las_lineas_conservan_su_precio_si_el_catalogo_se_recalcula()
+    {
+        var grabado = await GrabarOk(Datos(lineas: [Linea(1815m)]));
+        (await _cliente.PutAsJsonAsync("/api/configuracion", new
+        {
+            alicuotaIva = 21m, condicionFiscal = "ResponsableInscripto", topeIdentificacion = 10_000_000m, multiploRedondeo = 50m,
+        })).EnsureSuccessStatusCode();
+
+        var articulo = await _cliente.GetFromJsonAsync<JsonElement>($"/api/articulos/{_articulo}");
+        Assert.Equal(1850.00m, articulo.GetProperty("precioVenta").GetDecimal());
+        var leido = await _cliente.GetFromJsonAsync<JsonElement>($"/api/presupuestos/{grabado.GetProperty("numero").GetInt32()}");
+        Assert.Equal(1815.00m, leido.GetProperty("lineas")[0].GetProperty("precioUnitario").GetDecimal());
+        Assert.Equal(1815.00m, leido.GetProperty("total").GetDecimal());
+    }
+
+    [Fact]
+    public async Task Sin_lineas_no_graba()
+    {
+        var errores = await Errores(await Grabar(Datos(lineas: [])));
+
+        Assert.Equal("Agregá al menos un artículo al presupuesto", errores.GetProperty("lineas")[0].GetString());
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(2.5)] // AC-43
+    public async Task AC12_AC43_rechaza_cantidades_no_enteras_o_menores_a_1(decimal cantidad)
+    {
+        var errores = await Errores(await Grabar(Datos(lineas: [Linea(cantidad: cantidad)])));
+
+        Assert.Equal("La cantidad debe ser un número entero mayor a 0", errores.GetProperty("lineas[0].cantidad")[0].GetString());
+    }
+
+    [Fact]
+    public async Task AC12_rechaza_un_precio_unitario_negativo()
+    {
+        var errores = await Errores(await Grabar(Datos(lineas: [Linea(), Linea(precioUnitario: -1m)])));
+
+        Assert.Equal("El precio unitario no puede ser negativo", errores.GetProperty("lineas[1].precioUnitario")[0].GetString());
+    }
+
+    [Theory]
+    [InlineData(-5)]
+    [InlineData(100.01)]
+    public async Task AC42_rechaza_un_descuento_fuera_de_0_a_100(decimal descuento)
+    {
+        var errores = await Errores(await Grabar(Datos(lineas: [Linea(porcentajeDescuento: descuento)])));
+
+        Assert.Equal("El descuento debe estar entre 0 y 100", errores.GetProperty("lineas[0].porcentajeDescuento")[0].GetString());
+    }
+
+    [Fact]
+    public async Task Rechaza_un_articulo_que_no_esta_en_el_catalogo()
+    {
+        var errores = await Errores(await Grabar(Datos(lineas: [Linea(codigoArticulo: 999)])));
+
+        Assert.Contains("no existe en el catálogo", errores.GetProperty("lineas[0].codigoArticulo")[0].GetString());
     }
 }

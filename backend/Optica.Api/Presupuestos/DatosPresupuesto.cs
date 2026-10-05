@@ -4,11 +4,24 @@ namespace Optica.Api.Presupuestos;
 
 public record DatosCliente(string? Apellido, string? Nombre, string? Dni, string? Domicilio, string? Email, string? Telefono);
 
-public record DatosPresupuesto(DatosCliente? Cliente);
+/// <summary>
+/// Línea tal como la envía la pantalla: el artículo elegido, su descripción y precio
+/// copiados del catálogo (RF-39), y lo que ajusta la operadora (RF-40). Cantidad es
+/// decimal para poder rechazar 2,5 con un mensaje por campo en lugar de un error de formato.
+/// Los precios con descuento y final los calcula el servidor; si vienen, se ignoran.
+/// </summary>
+public record DatosLinea(int? CodigoArticulo, string? Descripcion, decimal? PrecioUnitario, decimal? Cantidad,
+    decimal? PorcentajeDescuento);
+
+public record DatosPresupuesto(DatosCliente? Cliente, List<DatosLinea?>? Lineas);
 
 public record ClienteVista(string Apellido, string Nombre, string Dni, string? Domicilio, string? Email, string? Telefono);
 
-public record PresupuestoVista(int Numero, DateOnly Fecha, string Estado, ClienteVista Cliente);
+public record LineaVista(int CodigoArticulo, string Descripcion, decimal PrecioUnitario, int Cantidad,
+    decimal PorcentajeDescuento, decimal PrecioConDescuento, decimal PrecioFinal);
+
+public record PresupuestoVista(int Numero, DateOnly Fecha, string Estado, ClienteVista Cliente,
+    IReadOnlyList<LineaVista> Lineas, decimal Total);
 
 public static class ValidacionPresupuesto
 {
@@ -16,6 +29,7 @@ public static class ValidacionPresupuesto
     public const int LargoDomicilio = 200;
     public const int LargoEmail = 150;
     public const int LargoTelefono = 30;
+    public const int MaximoLineas = 100;
 
     /// <summary>
     /// Valida con un mensaje por campo que indica cómo corregirlo (RF-35). Apellido,
@@ -40,7 +54,49 @@ public static class ValidacionPresupuesto
         if (Opcional(errores, "cliente.email", c.Email, LargoEmail) && !EmailValido(c.Email!))
             errores["cliente.email"] = ["Revisá el email: debe tener la forma nombre@dominio.com"];
 
+        ValidarLineas(errores, datos.Lineas);
         return errores;
+    }
+
+    /// <summary>RF-16, RF-17, RF-59, RF-60 y al menos una línea (AC-01, AC-04).</summary>
+    private static void ValidarLineas(Dictionary<string, string[]> errores, List<DatosLinea?>? lineas)
+    {
+        if (lineas is null || lineas.Count == 0)
+        {
+            errores["lineas"] = ["Agregá al menos un artículo al presupuesto"];
+            return;
+        }
+        if (lineas.Count > MaximoLineas)
+        {
+            errores["lineas"] = [$"El presupuesto puede tener hasta {MaximoLineas} líneas"];
+            return;
+        }
+
+        for (var i = 0; i < lineas.Count; i++)
+        {
+            var linea = lineas[i];
+            var campo = $"lineas[{i}]";
+
+            if (linea?.CodigoArticulo is null)
+                errores[$"{campo}.codigoArticulo"] = ["Elegí un artículo del catálogo"];
+            if (string.IsNullOrWhiteSpace(linea?.Descripcion))
+                errores[$"{campo}.descripcion"] = ["La línea no tiene descripción: volvé a elegir el artículo"];
+
+            if (linea?.Cantidad is not { } cantidad || cantidad <= 0 || cantidad != decimal.Truncate(cantidad) || cantidad > 9999)
+                errores[$"{campo}.cantidad"] = ["La cantidad debe ser un número entero mayor a 0"];
+
+            if (linea?.PrecioUnitario is not { } precio)
+                errores[$"{campo}.precioUnitario"] = ["Ingresá el precio unitario"];
+            else if (precio < 0)
+                errores[$"{campo}.precioUnitario"] = ["El precio unitario no puede ser negativo"];
+            else if (decimal.Round(precio, 2) != precio)
+                errores[$"{campo}.precioUnitario"] = ["El precio unitario puede tener como máximo 2 decimales"];
+
+            if (linea?.PorcentajeDescuento is not { } descuento || descuento < 0 || descuento > 100)
+                errores[$"{campo}.porcentajeDescuento"] = ["El descuento debe estar entre 0 y 100"];
+            else if (decimal.Round(descuento, 2) != descuento)
+                errores[$"{campo}.porcentajeDescuento"] = ["El descuento puede tener como máximo 2 decimales"];
+        }
     }
 
     private static bool DniValido(string dni)

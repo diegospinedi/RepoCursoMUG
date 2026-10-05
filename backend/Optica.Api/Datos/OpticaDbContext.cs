@@ -65,6 +65,15 @@ public class OpticaDbContext(DbContextOptions<OpticaDbContext> options) : DbCont
                 c.HasIndex(x => x.Dni);
             });
             e.Navigation(p => p.Cliente).IsRequired();
+            e.OwnsMany(p => p.Lineas, l =>
+            {
+                l.ToTable("LineasPresupuesto");
+                l.WithOwner().HasForeignKey("PresupuestoId");
+                l.HasKey("PresupuestoId", nameof(LineaPresupuesto.Orden));
+                l.Property(x => x.Orden).ValueGeneratedNever();
+                l.Property(x => x.Descripcion).HasMaxLength(Catalogo.ArticulosEndpoints.LargoMaximoDescripcion);
+            });
+            e.Navigation(p => p.Lineas).HasField("_lineas");
         });
     }
 }

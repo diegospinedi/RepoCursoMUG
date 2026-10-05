@@ -45,6 +45,38 @@ public class Cliente
     private static string? Opcional(string? texto) => string.IsNullOrWhiteSpace(texto) ? null : texto.Trim();
 }
 
+/// <summary>
+/// Línea del presupuesto (RF-12). Guarda una copia del código, la descripción y el
+/// precio del artículo al momento de cargarla: si después cambia el catálogo, la
+/// línea conserva su precio (RF-87).
+/// </summary>
+public class LineaPresupuesto
+{
+    public int Orden { get; private set; }
+    public int CodigoArticulo { get; private set; }
+    public string Descripcion { get; private set; } = "";
+    public decimal PrecioUnitario { get; private set; }
+    public int Cantidad { get; private set; }
+    public decimal PorcentajeDescuento { get; private set; }
+    public decimal PrecioConDescuento { get; private set; }
+    public decimal PrecioFinal { get; private set; }
+
+    private LineaPresupuesto() { }
+
+    public LineaPresupuesto(int orden, int codigoArticulo, string descripcion, decimal precioUnitario, int cantidad,
+        decimal porcentajeDescuento)
+    {
+        Orden = orden;
+        CodigoArticulo = codigoArticulo;
+        Descripcion = descripcion.Trim();
+        PrecioUnitario = precioUnitario;
+        Cantidad = cantidad;
+        PorcentajeDescuento = porcentajeDescuento;
+        PrecioConDescuento = CalculoLinea.PrecioConDescuento(precioUnitario, porcentajeDescuento);
+        PrecioFinal = CalculoLinea.PrecioFinal(PrecioConDescuento, cantidad);
+    }
+}
+
 public class Presupuesto
 {
     public int Id { get; private set; }
@@ -59,12 +91,20 @@ public class Presupuesto
 
     public Cliente Cliente { get; private set; } = null!;
 
+    private readonly List<LineaPresupuesto> _lineas = [];
+    public IReadOnlyList<LineaPresupuesto> Lineas => _lineas;
+
+    /// <summary>Suma de los precios finales de las líneas (RF-15).</summary>
+    public decimal Total { get; private set; }
+
     private Presupuesto() { }
 
-    public Presupuesto(int numero, DateOnly fecha, Cliente cliente)
+    public Presupuesto(int numero, DateOnly fecha, Cliente cliente, IEnumerable<LineaPresupuesto> lineas)
     {
         Numero = numero;
         Fecha = fecha;
         Cliente = cliente;
+        _lineas.AddRange(lineas);
+        Total = CalculoLinea.Total(_lineas);
     }
 }
