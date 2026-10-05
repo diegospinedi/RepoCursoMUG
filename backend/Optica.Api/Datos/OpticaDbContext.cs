@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Optica.Api.Catalogo;
 using Optica.Api.Configuracion;
+using Optica.Api.Presupuestos;
 
 namespace Optica.Api.Datos;
 
@@ -9,6 +10,7 @@ public class OpticaDbContext(DbContextOptions<OpticaDbContext> options) : DbCont
     public DbSet<Acceso.Acceso> Accesos => Set<Acceso.Acceso>();
     public DbSet<ParametrosNegocio> Parametros => Set<ParametrosNegocio>();
     public DbSet<Articulo> Articulos => Set<Articulo>();
+    public DbSet<Presupuesto> Presupuestos => Set<Presupuesto>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -44,6 +46,25 @@ public class OpticaDbContext(DbContextOptions<OpticaDbContext> options) : DbCont
             // La actualización por planilla (RF-47) busca por código en el proveedor.
             e.HasIndex(a => a.CodigoProveedor);
             e.HasIndex(a => a.Descripcion);
+        });
+
+        modelBuilder.Entity<Presupuesto>(e =>
+        {
+            e.HasIndex(p => p.Numero).IsUnique();
+            e.HasIndex(p => p.Fecha);
+            e.Property(p => p.Estado).HasConversion<string>().HasMaxLength(20);
+            e.OwnsOne(p => p.Cliente, c =>
+            {
+                c.Property(x => x.Apellido).HasMaxLength(ValidacionPresupuesto.LargoNombre);
+                c.Property(x => x.Nombre).HasMaxLength(ValidacionPresupuesto.LargoNombre);
+                c.Property(x => x.Dni).HasMaxLength(9);
+                c.Property(x => x.Domicilio).HasMaxLength(ValidacionPresupuesto.LargoDomicilio);
+                c.Property(x => x.Email).HasMaxLength(ValidacionPresupuesto.LargoEmail);
+                c.Property(x => x.Telefono).HasMaxLength(ValidacionPresupuesto.LargoTelefono);
+                c.HasIndex(x => x.ApellidoBusqueda);
+                c.HasIndex(x => x.Dni);
+            });
+            e.Navigation(p => p.Cliente).IsRequired();
         });
     }
 }

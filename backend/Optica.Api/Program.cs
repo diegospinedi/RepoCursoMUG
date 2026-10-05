@@ -5,6 +5,7 @@ using Optica.Api.Acceso;
 using Optica.Api.Catalogo;
 using Optica.Api.Configuracion;
 using Optica.Api.Datos;
+using Optica.Api.Presupuestos;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,6 +50,12 @@ builder.Services.AddAuthorizationBuilder()
 
 var app = builder.Build();
 
+// WAL: las lecturas no bloquean a quien graba y viceversa (RNF-13). Queda guardado en el archivo de la base.
+using (var scope = app.Services.CreateScope())
+{
+    scope.ServiceProvider.GetRequiredService<OpticaDbContext>().Database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi().AllowAnonymous();
@@ -60,5 +67,6 @@ app.UseAuthorization();
 app.MapAcceso();
 app.MapConfiguracion();
 app.MapArticulos();
+app.MapPresupuestos();
 
 app.Run();
