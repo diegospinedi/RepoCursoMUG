@@ -1,0 +1,37 @@
+.acceso {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: var(--espacio-5);
+}
+
+.acceso-tarjeta {
+  width: 100%;
+  max-width: 400px;
+  padding: var(--espacio-6);
+  border-top: 4px solid var(--color-primario);
+}
+
+.acceso-logo {
+  display: block;
+  width: 220px;
+  max-width: 100%;
+  margin: 0 auto var(--espacio-5);
+}
+
+.acceso-tarjeta h1 {
+  font-size: var(--texto-lg);
+  text-align: center;
+}
+
+.acceso-ayuda {
+  margin: 0 0 var(--espacio-5);
+  font-size: var(--texto-sm);
+  color: var(--color-texto-suave);
+  text-align: center;
+}
+
+.acceso-tarjeta .boton {
+  justify-content: center;
+  width: 100%;
+}
