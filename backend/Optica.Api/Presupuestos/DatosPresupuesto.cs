@@ -5,15 +5,16 @@ namespace Optica.Api.Presupuestos;
 public record DatosCliente(string? Apellido, string? Nombre, string? Dni, string? Domicilio, string? Email, string? Telefono);
 
 /// <summary>
-/// Línea tal como la envía la pantalla: el artículo elegido, su descripción y precio
-/// copiados del catálogo (RF-39), y lo que ajusta la operadora (RF-40). Cantidad es
-/// decimal para poder rechazar 2,5 con un mensaje por campo en lugar de un error de formato.
-/// Los precios con descuento y final los calcula el servidor; si vienen, se ignoran.
+/// Línea tal como la envía la pantalla: el artículo elegido y lo que ajusta la
+/// operadora (RF-40). La descripción y el precio unitario NO se reciben: los toma
+/// el servidor del catálogo o de la línea ya grabada (ver PresupuestosEndpoints).
+/// Cantidad es decimal para poder rechazar 2,5 con un mensaje por campo en lugar
+/// de un error de formato.
 /// </summary>
-public record DatosLinea(int? CodigoArticulo, string? Descripcion, decimal? PrecioUnitario, decimal? Cantidad,
-    decimal? PorcentajeDescuento);
+public record DatosLinea(int? CodigoArticulo, decimal? Cantidad, decimal? PorcentajeDescuento);
 
-public record DatosPresupuesto(DatosCliente? Cliente, List<DatosLinea?>? Lineas);
+/// <summary>Estado solo se usa al modificar: un presupuesto nuevo siempre nace en Borrador (AC-04).</summary>
+public record DatosPresupuesto(DatosCliente? Cliente, List<DatosLinea?>? Lineas, string? Estado = null);
 
 public record ClienteVista(string Apellido, string Nombre, string Dni, string? Domicilio, string? Email, string? Telefono);
 
@@ -79,18 +80,9 @@ public static class ValidacionPresupuesto
 
             if (linea?.CodigoArticulo is null)
                 errores[$"{campo}.codigoArticulo"] = ["Elegí un artículo del catálogo"];
-            if (string.IsNullOrWhiteSpace(linea?.Descripcion))
-                errores[$"{campo}.descripcion"] = ["La línea no tiene descripción: volvé a elegir el artículo"];
 
             if (linea?.Cantidad is not { } cantidad || cantidad <= 0 || cantidad != decimal.Truncate(cantidad) || cantidad > 9999)
                 errores[$"{campo}.cantidad"] = ["La cantidad debe ser un número entero mayor a 0"];
-
-            if (linea?.PrecioUnitario is not { } precio)
-                errores[$"{campo}.precioUnitario"] = ["Ingresá el precio unitario"];
-            else if (precio < 0)
-                errores[$"{campo}.precioUnitario"] = ["El precio unitario no puede ser negativo"];
-            else if (decimal.Round(precio, 2) != precio)
-                errores[$"{campo}.precioUnitario"] = ["El precio unitario puede tener como máximo 2 decimales"];
 
             if (linea?.PorcentajeDescuento is not { } descuento || descuento < 0 || descuento > 100)
                 errores[$"{campo}.porcentajeDescuento"] = ["El descuento debe estar entre 0 y 100"];

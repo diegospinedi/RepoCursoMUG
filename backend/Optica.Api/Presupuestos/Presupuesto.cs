@@ -104,6 +104,33 @@ public class Presupuesto
         Numero = numero;
         Fecha = fecha;
         Cliente = cliente;
+        ReemplazarLineas(lineas);
+    }
+
+    /// <summary>Solo en Borrador (RF-07, RF-08).</summary>
+    public void Modificar(Cliente cliente, IEnumerable<LineaPresupuesto> lineas)
+    {
+        ExigirBorrador();
+        Cliente = cliente;
+        ReemplazarLineas(lineas);
+    }
+
+    /// <summary>Pasa a Final. No hay camino de vuelta a Borrador (RF-67).</summary>
+    public void Finalizar()
+    {
+        ExigirBorrador();
+        Estado = EstadoPresupuesto.Final;
+    }
+
+    private void ExigirBorrador()
+    {
+        if (Estado == EstadoPresupuesto.Final)
+            throw new InvalidOperationException($"El presupuesto {Numero} está en estado Final y no se puede modificar.");
+    }
+
+    private void ReemplazarLineas(IEnumerable<LineaPresupuesto> lineas)
+    {
+        _lineas.Clear();
         _lineas.AddRange(lineas);
         Total = CalculoLinea.Total(_lineas);
     }
