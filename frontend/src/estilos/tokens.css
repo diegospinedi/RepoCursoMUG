@@ -1,0 +1,42 @@
+/*
+ * Tokens de diseño (ver .claude/skills/frontend-design).
+ * --color-primario y --color-fondo los define src/marca.ts desde Marca/branding.json;
+ * los valores de acá son solo el respaldo mientras carga el script.
+ */
+:root {
+  --color-primario: #0903a0;
+  --color-fondo: #ffffff;
+  --color-primario-oscuro: color-mix(in srgb, var(--color-primario) 75%, black);
+  --color-primario-suave: color-mix(in srgb, var(--color-primario) 8%, var(--color-fondo));
+  --color-superficie: #f4f5fa;
+  --color-borde: #d9dbe6;
+  --color-texto: #1b1d2a;
+  --color-texto-suave: #5d6178;
+  --color-error: #b3261e;
+  --color-error-suave: #fdecea;
+  --color-exito: #1e7b34;
+  --color-exito-suave: #e7f5ea;
+  --color-aviso: #9a6200;
+  --color-aviso-suave: #fff4dc;
+
+  --fuente-titulos: 'Montserrat', system-ui, sans-serif;
+  --fuente-texto: 'Barlow', system-ui, sans-serif;
+
+  --texto-xs: 0.8125rem;
+  --texto-sm: 0.9375rem;
+  --texto-base: 1rem;
+  --texto-lg: 1.25rem;
+  --texto-xl: 1.625rem;
+
+  --espacio-1: 4px;
+  --espacio-2: 8px;
+  --espacio-3: 12px;
+  --espacio-4: 16px;
+  --espacio-5: 24px;
+  --espacio-6: 32px;
+
+  --radio: 6px;
+  --sombra-tarjeta: 0 1px 2px rgb(16 18 40 / 6%), 0 2px 8px rgb(16 18 40 / 4%);
+  --anillo-foco: 0 0 0 3px color-mix(in srgb, var(--color-primario) 25%, transparent);
+  --ancho-contenido: 1200px;
+}
