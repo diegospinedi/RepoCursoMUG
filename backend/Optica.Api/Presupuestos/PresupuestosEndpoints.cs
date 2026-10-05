@@ -1,14 +1,13 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Optica.Api.Datos;
+using Optica.Api.Facturacion;
 
 namespace Optica.Api.Presupuestos;
 
 public static class PresupuestosEndpoints
 {
     public const int TamanoPagina = 50;
-
-    private static readonly TimeZoneInfo HoraArgentina = TimeZoneInfo.FindSystemTimeZoneById("America/Argentina/Buenos_Aires");
 
     public static void MapPresupuestos(this IEndpointRouteBuilder app)
     {
@@ -59,9 +58,21 @@ public static class PresupuestosEndpoints
         });
 
         grupo.MapGet("/{numero:int}", async (int numero, OpticaDbContext db) =>
-            await db.Presupuestos.AsNoTracking().Include(p => p.Lineas).SingleOrDefaultAsync(p => p.Numero == numero) is { } presupuesto
-                ? Results.Ok(AVista(presupuesto))
-                : NoEncontrado(numero));
+        {
+            var presupuesto = await db.Presupuestos.AsNoTracking().Include(p => p.Lineas).SingleOrDefaultAsync(p => p.Numero == numero);
+            if (presupuesto is null)
+                return NoEncontrado(numero);
+
+            var factura = await db.Facturas.AsNoTracking().Where(f => f.PresupuestoId == presupuesto.Id)
+                .Select(f => new { f.Tipo, f.PuntoVenta, f.Numero, f.Fecha, f.Cae }).SingleOrDefaultAsync();
+            var pendiente = await db.EmisionesPendientes.AnyAsync(e => e.PresupuestoId == presupuesto.Id);
+            return Results.Ok(AVista(presupuesto) with
+            {
+                Factura = factura is null ? null : new FacturaResumen(Factura.Letra(factura.Tipo),
+                    Factura.FormatearNumero(factura.PuntoVenta, factura.Numero), factura.Fecha, factura.Cae),
+                FacturacionPendiente = pendiente,
+            });
+        });
 
         // RF-02, RF-36: PDF para descargar. Solo en estado Final (RF-09, AC-08).
         grupo.MapGet("/{numero:int}/pdf", async (int numero, OpticaDbContext db) =>
@@ -84,7 +95,7 @@ public static class PresupuestosEndpoints
                 return Results.ValidationProblem(errores);
 
             var cliente = CrearCliente(datos.Cliente!);
-            var fecha = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(reloj.GetUtcNow(), HoraArgentina).DateTime);
+            var fecha = FechaArgentina.Hoy(reloj);
 
             var presupuesto = await GrabarConNumeroNuevoAsync(db, numero => new Presupuesto(numero, fecha, cliente, lineas));
             return Results.Created($"/api/presupuestos/{presupuesto.Numero}", AVista(presupuesto));

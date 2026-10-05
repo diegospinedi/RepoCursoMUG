@@ -26,8 +26,14 @@ public record ResumenPresupuesto(int Numero, DateOnly Fecha, string Estado, stri
 
 public record PaginaPresupuestos(IReadOnlyList<ResumenPresupuesto> Presupuestos, int Total, int Pagina, int TamanoPagina);
 
+/// <summary>Factura emitida desde el presupuesto, para mostrarla en su pantalla.</summary>
+public record FacturaResumen(string Letra, string Comprobante, DateOnly Fecha, string Cae);
+
+/// <summary>
+/// FacturacionPendiente: hubo una emisión sin respuesta de ARCA que hay que reintentar (RF-52).
+/// </summary>
 public record PresupuestoVista(int Numero, DateOnly Fecha, string Estado, ClienteVista Cliente,
-    IReadOnlyList<LineaVista> Lineas, decimal Total);
+    IReadOnlyList<LineaVista> Lineas, decimal Total, FacturaResumen? Factura = null, bool FacturacionPendiente = false);
 
 public static class ValidacionPresupuesto
 {

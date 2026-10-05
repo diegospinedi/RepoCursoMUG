@@ -6,6 +6,7 @@ using Optica.Api.Arca;
 using Optica.Api.Catalogo;
 using Optica.Api.Configuracion;
 using Optica.Api.Datos;
+using Optica.Api.Facturacion;
 using Optica.Api.Presupuestos;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,6 +22,7 @@ builder.Services.AddDbContext<OpticaDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("Optica")));
 builder.Services.AddScoped<ServicioAcceso>();
 builder.Services.AddArca();
+builder.Services.AddScoped<ServicioFacturacion>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -77,5 +79,6 @@ app.MapAcceso();
 app.MapConfiguracion();
 app.MapArticulos();
 app.MapPresupuestos();
+app.MapFacturacion();
 
 app.Run();

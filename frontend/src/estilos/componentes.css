@@ -378,3 +378,44 @@ fieldset.tarjeta:disabled input,
   margin: calc(-1 * var(--espacio-2)) 0 var(--espacio-4);
   text-align: right;
 }
+
+.aviso-titulo {
+  margin: 0 0 var(--espacio-2);
+  font-weight: 600;
+}
+
+.lista-errores {
+  margin: 0;
+  padding-left: var(--espacio-5);
+}
+
+.datos-factura {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: var(--espacio-4);
+  margin: 0;
+}
+
+.datos-factura dt {
+  font-size: var(--texto-xs);
+  font-weight: 600;
+  color: var(--color-texto-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.datos-factura dd {
+  margin: var(--espacio-1) 0 0;
+  font: 600 var(--texto-base) var(--fuente-titulos);
+  color: var(--color-primario);
+}
+
+.numero-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.barra-facturar {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-4);
+}

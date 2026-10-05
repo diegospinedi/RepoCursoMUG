@@ -4,11 +4,14 @@ export type ErroresDeCampo = Record<string, string>
 export class ErrorApi extends Error {
   readonly estado: number
   readonly errores: ErroresDeCampo
+  /** Cuerpo completo de la respuesta (ProblemDetails), con sus datos adicionales. */
+  readonly cuerpo: Record<string, unknown>
 
-  constructor(estado: number, mensaje: string, errores: ErroresDeCampo = {}) {
+  constructor(estado: number, mensaje: string, errores: ErroresDeCampo = {}, cuerpo: Record<string, unknown> = {}) {
     super(mensaje)
     this.estado = estado
     this.errores = errores
+    this.cuerpo = cuerpo
   }
 }
 
@@ -39,5 +42,5 @@ export async function pedir<T = void>(ruta: string, opciones: RequestInit = {}):
     alPerderSesion()
   }
 
-  throw new ErrorApi(respuesta.status, cuerpo.detail ?? cuerpo.title ?? 'Error inesperado', errores)
+  throw new ErrorApi(respuesta.status, cuerpo.detail ?? cuerpo.title ?? 'Error inesperado', errores, cuerpo)
 }

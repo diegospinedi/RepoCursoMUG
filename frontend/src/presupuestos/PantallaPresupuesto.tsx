@@ -11,6 +11,7 @@ import {
   type Presupuesto,
 } from './apiPresupuestos'
 import { BuscadorArticulos } from './BuscadorArticulos'
+import { SeccionFacturacion } from './SeccionFacturacion'
 import { centavosAImporte, precioConDescuentoEnCentavos, precioFinalEnCentavos } from './calculo'
 
 type CampoCliente = keyof Cliente
@@ -130,6 +131,8 @@ function FormularioPresupuesto({ numero }: { numero?: number }) {
   const [aviso, setAviso] = useState<Aviso | undefined>(avisoAlLlegar)
   const [grabando, setGrabando] = useState(false)
 
+  const [lecturas, setLecturas] = useState(0)
+
   useEffect(() => {
     if (numero === undefined) return
     apiPresupuestos
@@ -144,7 +147,7 @@ function FormularioPresupuesto({ numero }: { numero?: number }) {
           texto: e instanceof ErrorApi && e.estado === 404 ? `No existe el presupuesto ${numero}.` : 'No se pudo leer el presupuesto.',
         }),
       )
-  }, [numero])
+  }, [numero, lecturas])
 
   const esFinal = presupuesto?.estado === 'Final'
 
@@ -260,7 +263,7 @@ function FormularioPresupuesto({ numero }: { numero?: number }) {
           </Link>
           {esFinal ? (
             // RF-36: descarga directa; la cookie de sesión viaja sola (mismo origen).
-            <a className="boton boton-primario" href={`/api/presupuestos/${numero}/pdf`} download>
+            <a className="boton" href={`/api/presupuestos/${numero}/pdf`} download>
               Descargar PDF
             </a>
           ) : (
@@ -413,6 +416,8 @@ function FormularioPresupuesto({ numero }: { numero?: number }) {
             )}
             <p className="campo-ayuda">Precios finales, IVA incluido.</p>
           </section>
+
+          {presupuesto && <SeccionFacturacion presupuesto={presupuesto} alFacturar={() => setLecturas((n) => n + 1)} />}
 
           {!esFinal && (
             <div className="tarjeta barra-acciones">

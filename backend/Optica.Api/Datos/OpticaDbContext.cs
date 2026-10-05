@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Optica.Api.Catalogo;
 using Optica.Api.Configuracion;
+using Optica.Api.Facturacion;
 using Optica.Api.Presupuestos;
 
 namespace Optica.Api.Datos;
@@ -11,6 +12,8 @@ public class OpticaDbContext(DbContextOptions<OpticaDbContext> options) : DbCont
     public DbSet<ParametrosNegocio> Parametros => Set<ParametrosNegocio>();
     public DbSet<Articulo> Articulos => Set<Articulo>();
     public DbSet<Presupuesto> Presupuestos => Set<Presupuesto>();
+    public DbSet<Factura> Facturas => Set<Factura>();
+    public DbSet<EmisionPendiente> EmisionesPendientes => Set<EmisionPendiente>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -74,6 +77,25 @@ public class OpticaDbContext(DbContextOptions<OpticaDbContext> options) : DbCont
                 l.Property(x => x.Descripcion).HasMaxLength(Catalogo.ArticulosEndpoints.LargoMaximoDescripcion);
             });
             e.Navigation(p => p.Lineas).HasField("_lineas");
+        });
+
+        modelBuilder.Entity<Factura>(e =>
+        {
+            e.HasOne<Presupuesto>().WithMany().HasForeignKey(f => f.PresupuestoId).OnDelete(DeleteBehavior.Restrict);
+            // Un presupuesto se factura una sola vez; un número de comprobante no se repite.
+            e.HasIndex(f => f.PresupuestoId).IsUnique();
+            e.HasIndex(f => new { f.PuntoVenta, f.Tipo, f.Numero }).IsUnique();
+            e.HasIndex(f => f.Fecha);
+            e.Property(f => f.Cae).HasMaxLength(14);
+            e.Property(f => f.CondicionFiscalEmisor).HasConversion<string>().HasMaxLength(30);
+        });
+
+        modelBuilder.Entity<EmisionPendiente>(e =>
+        {
+            e.ToTable("EmisionesPendientes");
+            e.HasOne<Presupuesto>().WithMany().HasForeignKey(p => p.PresupuestoId).OnDelete(DeleteBehavior.Restrict);
+            e.HasIndex(p => p.PresupuestoId).IsUnique();
+            e.Property(p => p.CondicionFiscalEmisor).HasConversion<string>().HasMaxLength(30);
         });
     }
 }

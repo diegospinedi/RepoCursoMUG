@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Time.Testing;
+using Optica.Api.Arca;
 using Optica.Api.Datos;
 
 namespace Optica.Tests;
@@ -27,12 +28,27 @@ public class AppDePrueba : WebApplicationFactory<Program>
     {
         builder.UseSetting("ConnectionStrings:Optica", $"Data Source={_rutaBase};Pooling=False");
         builder.UseSetting("Arca:Simulador:Archivo", _rutaArca);
+        builder.UseSetting("Arca:TiempoEsperaSegundos", "1");
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<TimeProvider>();
             services.AddSingleton<TimeProvider>(Reloj);
             services.AddSingleton<IStartupFilter>(new FiltroIpOrigen(() => IpOrigen));
+            services.AddSingleton(sp => new ArcaEspia(
+                new ArcaConTiempoLimite(sp.GetRequiredService<ArcaSimulado>(), sp.GetRequiredService<OpcionesArca>())));
+            services.AddSingleton<IServicioArca>(sp => sp.GetRequiredService<ArcaEspia>());
         });
+    }
+
+    /// <summary>Llamadas hechas a ARCA (simulado).</summary>
+    public ArcaEspia Arca => Services.GetRequiredService<ArcaEspia>();
+
+    /// <summary>Simulador directo, sin espía ni tiempo límite, para preparar escenarios.</summary>
+    public ArcaSimulado SimuladorArca => Services.GetRequiredService<ArcaSimulado>();
+
+    public ModoSimulador ModoArca
+    {
+        set => Services.GetRequiredService<OpcionesArca>().Simulador.Modo = value;
     }
 
     public void CrearBase()

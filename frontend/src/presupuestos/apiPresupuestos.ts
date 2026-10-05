@@ -21,6 +21,8 @@ export type Linea = {
   precioFinal: number
 }
 
+export type FacturaResumen = { letra: string; comprobante: string; fecha: string; cae: string }
+
 export type Presupuesto = {
   numero: number
   fecha: string
@@ -28,6 +30,9 @@ export type Presupuesto = {
   cliente: Cliente
   lineas: Linea[]
   total: number
+  factura?: FacturaResumen | null
+  /** Una emisión quedó sin respuesta de ARCA y hay que reintentarla (RF-52). */
+  facturacionPendiente?: boolean
 }
 
 /**
