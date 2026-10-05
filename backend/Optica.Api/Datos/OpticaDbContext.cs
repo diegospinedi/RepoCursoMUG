@@ -87,6 +87,7 @@ public class OpticaDbContext(DbContextOptions<OpticaDbContext> options) : DbCont
             e.HasIndex(f => new { f.PuntoVenta, f.Tipo, f.Numero }).IsUnique();
             e.HasIndex(f => f.Fecha);
             e.Property(f => f.Cae).HasMaxLength(14);
+            e.Property(f => f.ComprobanteBusqueda).HasMaxLength(12);
             e.Property(f => f.CondicionFiscalEmisor).HasConversion<string>().HasMaxLength(30);
         });
 

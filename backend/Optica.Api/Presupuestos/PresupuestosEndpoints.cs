@@ -18,32 +18,24 @@ public static class PresupuestosEndpoints
             OpticaDbContext db) =>
         {
             var errores = new Dictionary<string, string[]>();
-            var fechaDesde = LeerFecha(desde, "desde", errores);
-            var fechaHasta = LeerFecha(hasta, "hasta", errores);
-            if (fechaDesde > fechaHasta)
-                errores["hasta"] = ["La fecha Hasta no puede ser anterior a la fecha Desde"];
-            var dniBuscado = Cliente.SoloDigitos(dni ?? "");
-            if (!string.IsNullOrWhiteSpace(dni) && dniBuscado == "")
-                errores["dni"] = ["Ingresá solo los números del DNI, con o sin puntos"];
+            var filtros = FiltrosBusqueda.Leer(desde, hasta, apellido, nombre, dni, errores);
             if (errores.Count > 0)
                 return Results.ValidationProblem(errores);
 
             var consulta = db.Presupuestos.AsNoTracking();
             // RF-83: rango inclusive, con uno solo de los dos límites si se quiere.
-            if (fechaDesde is { } d)
+            if (filtros.Desde is { } d)
                 consulta = consulta.Where(p => p.Fecha >= d);
-            if (fechaHasta is { } h)
+            if (filtros.Hasta is { } h)
                 consulta = consulta.Where(p => p.Fecha <= h);
             // RF-82: coincidencia parcial sin mayúsculas ni acentos, sobre las columnas normalizadas.
-            var apellidoBuscado = TextoBusqueda.Normalizar(apellido);
-            if (apellidoBuscado != "")
-                consulta = consulta.Where(p => p.Cliente.ApellidoBusqueda.Contains(apellidoBuscado));
-            var nombreBuscado = TextoBusqueda.Normalizar(nombre);
-            if (nombreBuscado != "")
-                consulta = consulta.Where(p => p.Cliente.NombreBusqueda.Contains(nombreBuscado));
+            if (filtros.Apellido != "")
+                consulta = consulta.Where(p => p.Cliente.ApellidoBusqueda.Contains(filtros.Apellido));
+            if (filtros.Nombre != "")
+                consulta = consulta.Where(p => p.Cliente.NombreBusqueda.Contains(filtros.Nombre));
             // RF-88: coincidencia parcial ignorando puntos y guiones (el DNI se guarda solo con dígitos).
-            if (dniBuscado != "")
-                consulta = consulta.Where(p => p.Cliente.Dni.Contains(dniBuscado));
+            if (filtros.Dni != "")
+                consulta = consulta.Where(p => p.Cliente.Dni.Contains(filtros.Dni));
 
             var numeroPagina = Math.Max(pagina ?? 1, 1);
             var total = await consulta.CountAsync();
@@ -135,16 +127,6 @@ public static class PresupuestosEndpoints
 
             return Results.Ok(AVista(presupuesto));
         });
-    }
-
-    private static DateOnly? LeerFecha(string? texto, string campo, Dictionary<string, string[]> errores)
-    {
-        if (string.IsNullOrWhiteSpace(texto))
-            return null;
-        if (DateOnly.TryParseExact(texto, "yyyy-MM-dd", out var fecha))
-            return fecha;
-        errores[campo] = ["Ingresá una fecha válida (dd/mm/aaaa)"];
-        return null;
     }
 
     private static Cliente CrearCliente(DatosCliente c) =>

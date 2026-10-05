@@ -7,6 +7,7 @@ import { Ingreso } from './acceso/Ingreso'
 import { useInactividad } from './acceso/useInactividad'
 import { PantallaArticulo } from './catalogo/PantallaArticulo'
 import { PantallaCatalogo } from './catalogo/PantallaCatalogo'
+import { PantallaFacturas } from './facturacion/PantallaFacturas'
 import { PantallaConfiguracion } from './configuracion/PantallaConfiguracion'
 import { Layout } from './Layout'
 import { PantallaPresupuesto } from './presupuestos/PantallaPresupuesto'
@@ -67,6 +68,7 @@ function AppConSesion({ alSalir }: { alSalir: () => void }) {
                 Inicio
               </NavLink>
               <NavLink to="/presupuestos">Presupuestos</NavLink>
+              <NavLink to="/facturas">Facturas</NavLink>
               <NavLink to="/catalogo">Catálogo</NavLink>
               <NavLink to="/configuracion">Configuración</NavLink>
             </nav>
@@ -81,6 +83,7 @@ function AppConSesion({ alSalir }: { alSalir: () => void }) {
           <Route path="/presupuestos" element={<PantallaPresupuestos />} />
           <Route path="/presupuestos/nuevo" element={<PantallaPresupuesto />} />
           <Route path="/presupuestos/:numero" element={<PantallaPresupuesto />} />
+          <Route path="/facturas" element={<PantallaFacturas />} />
           <Route path="/catalogo" element={<PantallaCatalogo />} />
           <Route path="/catalogo/nuevo" element={<PantallaArticulo />} />
           <Route path="/catalogo/:codigo" element={<PantallaArticulo />} />

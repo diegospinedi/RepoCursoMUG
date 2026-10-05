@@ -40,7 +40,7 @@ public class Cliente
         NombreBusqueda = TextoBusqueda.Normalizar(nombre),
     };
 
-    public static string SoloDigitos(string texto) => new(texto.Where(char.IsAsciiDigit).ToArray());
+    public static string SoloDigitos(string texto) => FiltrosBusqueda.SoloDigitos(texto);
 
     private static string? Opcional(string? texto) => string.IsNullOrWhiteSpace(texto) ? null : texto.Trim();
 }

@@ -29,6 +29,9 @@ public class Factura
     public string Cae { get; private set; } = "";
     public DateOnly VencimientoCae { get; private set; }
 
+    /// <summary>Punto de venta y número sin guion ("000300034561"), para buscar por parte del número (RF-88).</summary>
+    public string ComprobanteBusqueda { get; private set; } = "";
+
     private Factura() { }
 
     public Factura(int presupuestoId, SolicitudComprobante s, decimal? alicuotaIva, CondicionFiscal condicion, string cae,
@@ -48,6 +51,7 @@ public class Factura
         CondicionFiscalEmisor = condicion;
         Cae = cae;
         VencimientoCae = vencimientoCae;
+        ComprobanteBusqueda = FormatearNumero(PuntoVenta, Numero).Replace("-", "");
     }
 
     /// <summary>0003-00034561</summary>

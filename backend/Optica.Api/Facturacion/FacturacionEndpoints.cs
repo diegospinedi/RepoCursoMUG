@@ -21,10 +21,63 @@ public record FacturaVista(
     int NumeroPresupuesto,
     IReadOnlyList<LineaVista> Lineas);
 
+public record ResumenFactura(string Letra, string Comprobante, DateOnly Fecha, string Apellido, string Nombre, string Dni,
+    decimal ImporteTotal, string Cae, int NumeroPresupuesto);
+
+public record PaginaFacturas(IReadOnlyList<ResumenFactura> Facturas, int Total, int Pagina, int TamanoPagina);
+
 public static class FacturacionEndpoints
 {
+    public const int TamanoPagina = 50;
+
     public static void MapFacturacion(this IEndpointRouteBuilder app)
     {
+        // RF-33, RF-54: lista y busca facturas por fecha, número de comprobante y datos del
+        // cliente, con los filtros combinados con "Y" (RF-81). No hay endpoints para
+        // modificar ni eliminar una factura (RF-32).
+        app.MapGet("/api/facturas", async (string? desde, string? hasta, string? comprobante, string? apellido,
+            string? nombre, string? dni, int? pagina, OpticaDbContext db) =>
+        {
+            var errores = new Dictionary<string, string[]>();
+            var filtros = FiltrosBusqueda.Leer(desde, hasta, apellido, nombre, dni, errores);
+            var comprobanteBuscado = FiltrosBusqueda.SoloDigitos(comprobante);
+            if (!string.IsNullOrWhiteSpace(comprobante) && comprobanteBuscado == "")
+                errores["comprobante"] = ["Ingresá los números del comprobante, por ejemplo 0003-00034561 o 34561"];
+            if (errores.Count > 0)
+                return Results.ValidationProblem(errores);
+
+            var consulta = db.Facturas.AsNoTracking()
+                .Join(db.Presupuestos, f => f.PresupuestoId, p => p.Id, (f, p) => new { Factura = f, Presupuesto = p });
+            if (filtros.Desde is { } d)
+                consulta = consulta.Where(x => x.Factura.Fecha >= d);
+            if (filtros.Hasta is { } h)
+                consulta = consulta.Where(x => x.Factura.Fecha <= h);
+            if (comprobanteBuscado != "")
+                consulta = consulta.Where(x => x.Factura.ComprobanteBusqueda.Contains(comprobanteBuscado));
+            if (filtros.Apellido != "")
+                consulta = consulta.Where(x => x.Presupuesto.Cliente.ApellidoBusqueda.Contains(filtros.Apellido));
+            if (filtros.Nombre != "")
+                consulta = consulta.Where(x => x.Presupuesto.Cliente.NombreBusqueda.Contains(filtros.Nombre));
+            if (filtros.Dni != "")
+                consulta = consulta.Where(x => x.Presupuesto.Cliente.Dni.Contains(filtros.Dni));
+
+            var numeroPagina = Math.Max(pagina ?? 1, 1);
+            var total = await consulta.CountAsync();
+            var filas = await consulta
+                .OrderByDescending(x => x.Factura.Fecha).ThenByDescending(x => x.Factura.Id)
+                .Skip((numeroPagina - 1) * TamanoPagina).Take(TamanoPagina)
+                .Select(x => new
+                {
+                    x.Factura.Tipo, x.Factura.PuntoVenta, x.Factura.Numero, x.Factura.Fecha, x.Factura.ImporteTotal, x.Factura.Cae,
+                    x.Presupuesto.Cliente.Apellido, x.Presupuesto.Cliente.Nombre, x.Presupuesto.Cliente.Dni, NumeroPresupuesto = x.Presupuesto.Numero,
+                })
+                .ToListAsync();
+
+            var facturas = filas.Select(f => new ResumenFactura(Factura.Letra(f.Tipo), Factura.FormatearNumero(f.PuntoVenta, f.Numero),
+                f.Fecha, f.Apellido, f.Nombre, f.Dni, f.ImporteTotal, f.Cae, f.NumeroPresupuesto)).ToList();
+            return Results.Ok(new PaginaFacturas(facturas, total, numeroPagina, TamanoPagina));
+        });
+
         var grupo = app.MapGroup("/api/presupuestos/{numero:int}/factura");
 
         grupo.MapGet("/", async (int numero, OpticaDbContext db) =>
