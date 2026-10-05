@@ -14,6 +14,8 @@ export default defineConfig({
     fs: {
       allow: [searchForWorkspaceRoot(process.cwd()), '../Marca'],
     },
+    // Desde WSL sobre un disco de Windows (/mnt/c) no llegan eventos de cambios: hace falta polling.
+    watch: process.env.WSL_DISTRO_NAME && process.cwd().startsWith('/mnt/') ? { usePolling: true } : undefined,
   },
   test: {
     environment: 'jsdom',

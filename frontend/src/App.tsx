@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
+import { BrowserRouter, Navigate, NavLink, Route, Routes } from 'react-router'
 import { registrarAlPerderSesion } from './api'
 import { apiAcceso } from './acceso/apiAcceso'
 import { ContrasenaInicial } from './acceso/ContrasenaInicial'
 import { Ingreso } from './acceso/Ingreso'
 import { useInactividad } from './acceso/useInactividad'
+import { PantallaConfiguracion } from './configuracion/PantallaConfiguracion'
 import { Layout } from './Layout'
 
 type Pantalla = 'cargando' | 'sin-conexion' | 'definir-contrasena' | 'ingreso' | 'app'
@@ -52,18 +54,40 @@ function AppConSesion({ alSalir }: { alSalir: () => void }) {
   }
 
   return (
-    <Layout
-      acciones={
-        <button type="button" className="boton" onClick={salir}>
-          Salir
-        </button>
-      }
-    >
+    <BrowserRouter>
+      <Layout
+        acciones={
+          <>
+            <nav className="layout-navegacion" aria-label="Principal">
+              <NavLink to="/" end>
+                Inicio
+              </NavLink>
+              <NavLink to="/configuracion">Configuración</NavLink>
+            </nav>
+            <button type="button" className="boton" onClick={salir}>
+              Salir
+            </button>
+          </>
+        }
+      >
+        <Routes>
+          <Route path="/" element={<Inicio />} />
+          <Route path="/configuracion" element={<PantallaConfiguracion />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Layout>
+    </BrowserRouter>
+  )
+}
+
+function Inicio() {
+  return (
+    <>
       <h1>Inicio</h1>
       <section className="tarjeta">
         <p>Sesión iniciada. Las pantallas de catálogo y presupuestos llegan en los próximos pasos.</p>
       </section>
-    </Layout>
+    </>
   )
 }
 

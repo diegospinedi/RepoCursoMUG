@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Optica.Api.Acceso;
+using Optica.Api.Configuracion;
 using Optica.Api.Datos;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -56,5 +57,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapAcceso();
+app.MapConfiguracion();
 
 app.Run();

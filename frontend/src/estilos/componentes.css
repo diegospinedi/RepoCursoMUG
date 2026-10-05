@@ -156,3 +156,22 @@
   color: var(--color-primario);
   background: var(--color-primario-suave);
 }
+
+.campo-ayuda {
+  font-size: var(--texto-xs);
+  color: var(--color-texto-suave);
+}
+
+.formulario-grilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+  column-gap: var(--espacio-5);
+}
+
+.formulario-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--espacio-3);
+  padding-top: var(--espacio-4);
+  border-top: 1px solid var(--color-borde);
+}

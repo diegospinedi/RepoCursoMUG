@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -36,6 +37,16 @@ public class AppDePrueba : WebApplicationFactory<Program>
     {
         using var scope = Services.CreateScope();
         scope.ServiceProvider.GetRequiredService<OpticaDbContext>().Database.Migrate();
+    }
+
+    /// <summary>Crea la base, define la contraseña y devuelve un cliente con la sesión iniciada.</summary>
+    public async Task<HttpClient> ClienteConSesionAsync()
+    {
+        CrearBase();
+        var cliente = CreateClient();
+        var respuesta = await cliente.PostAsJsonAsync("/api/acceso/contrasena-inicial", new { contrasena = "clave-de-prueba" });
+        respuesta.EnsureSuccessStatusCode();
+        return cliente;
     }
 
     public T ConBase<T>(Func<OpticaDbContext, T> consulta)

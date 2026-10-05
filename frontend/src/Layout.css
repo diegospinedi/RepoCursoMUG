@@ -30,3 +30,26 @@
   margin: 0 auto;
   padding: var(--espacio-6) var(--espacio-5);
 }
+
+.layout-navegacion {
+  display: flex;
+  gap: var(--espacio-1);
+}
+
+.layout-navegacion a {
+  padding: var(--espacio-2) var(--espacio-3);
+  font: 600 var(--texto-sm) var(--fuente-titulos);
+  color: var(--color-texto-suave);
+  text-decoration: none;
+  border-radius: var(--radio);
+}
+
+.layout-navegacion a:hover {
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+}
+
+.layout-navegacion a.active {
+  color: var(--color-primario);
+  background: var(--color-primario-suave);
+}
