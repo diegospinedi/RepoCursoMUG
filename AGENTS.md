@@ -33,7 +33,7 @@ dotnet test Optica.slnx
 ```
 
 ## Qué NO hacer
-- **No modificar registros cerrados.** Un presupuesto en estado Final no se edita ni vuelve a Borrador (RF-08), y una factura con CAE no se modifica ni se elimina (RF-32). No agregues endpoints, migraciones ni "fixes" que permitan eso.
+- **No modificar registros cerrados.** Un presupuesto en estado Final no se edita ni vuelve a Borrador (RF-08, RF-67), y una factura con CAE no se modifica ni se elimina (RF-32). No agregues endpoints, migraciones ni "fixes" que permitan eso.
 - **No emitir contra ARCA producción.** Todo desarrollo y prueba va contra el entorno de homologación. No apuntes a producción ni uses el certificado productivo para probar; un comprobante autorizado por error no se puede anular desde el sistema (las notas de crédito están fuera de alcance).
 - **No ampliar el alcance.** Quedan afuera de esta versión: facturas A, notas de crédito/débito y anulaciones, envío automático por email o WhatsApp, ABM de clientes y módulo de usuarios con roles. Si algo parece necesitarlos, preguntá antes de implementarlo.
 
