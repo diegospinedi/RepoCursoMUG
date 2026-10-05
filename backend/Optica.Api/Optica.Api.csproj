@@ -13,6 +13,14 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.12" />
+    <PackageReference Include="QuestPDF" Version="2026.9.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Marca: se enlaza desde Marca/ (fuente única de verdad, RF-34) para los PDF (RF-55). -->
+    <Content Include="..\..\Marca\logo.png" Link="Recursos\Marca\logo.png" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\Marca\branding.json" Link="Recursos\Marca\branding.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Recursos\Fuentes\*.woff" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

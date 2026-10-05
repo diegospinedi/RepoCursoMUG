@@ -228,4 +228,22 @@ describe('pantalla de presupuesto', () => {
     expect(screen.queryByText(/^IVA/)).not.toBeInTheDocument()
     expect(screen.getByText('Precios finales, IVA incluido.')).toBeInTheDocument()
   })
+
+  it('AC-08: en Borrador el botón Descargar PDF está deshabilitado', async () => {
+    simularApi()
+    renderizarEn('/presupuestos/155')
+
+    await screen.findByText('Armazón acetato negro')
+    expect(screen.getByRole('button', { name: 'Descargar PDF' })).toBeDisabled()
+    expect(screen.getByText('El PDF se puede descargar cuando el presupuesto está en estado Final.')).toBeInTheDocument()
+  })
+
+  it('AC-09: en Final el PDF se descarga desde la API', async () => {
+    simularApi({ ...grabado, estado: 'Final' })
+    renderizarEn('/presupuestos/155')
+
+    const enlace = await screen.findByRole('link', { name: 'Descargar PDF' })
+    expect(enlace).toHaveAttribute('href', '/api/presupuestos/155/pdf')
+    expect(enlace).toHaveAttribute('download')
+  })
 })

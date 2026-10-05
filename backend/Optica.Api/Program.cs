@@ -9,6 +9,10 @@ using Optica.Api.Presupuestos;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// QuestPDF Community: gratuita para empresas con ingresos anuales menores a USD 1 millón.
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+Optica.Api.Recursos.Marca.RegistrarFuentes();
+
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddSingleton(TimeProvider.System);

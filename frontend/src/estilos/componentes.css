@@ -373,3 +373,8 @@ fieldset.tarjeta:disabled input,
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+.ayuda-encabezado {
+  margin: calc(-1 * var(--espacio-2)) 0 var(--espacio-4);
+  text-align: right;
+}

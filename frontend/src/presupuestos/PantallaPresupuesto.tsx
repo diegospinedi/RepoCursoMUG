@@ -254,10 +254,33 @@ function FormularioPresupuesto({ numero }: { numero?: number }) {
           )}
           {presupuesto && <span className="texto-secundario">{formatearFecha(presupuesto.fecha)}</span>}
         </div>
-        <Link to="/presupuestos" className="boton">
-          Volver a presupuestos
-        </Link>
+        <div className="acciones-encabezado">
+          <Link to="/presupuestos" className="boton">
+            Volver a presupuestos
+          </Link>
+          {esFinal ? (
+            // RF-36: descarga directa; la cookie de sesión viaja sola (mismo origen).
+            <a className="boton boton-primario" href={`/api/presupuestos/${numero}/pdf`} download>
+              Descargar PDF
+            </a>
+          ) : (
+            <button
+              type="button"
+              className="boton"
+              disabled
+              title="Pasá el presupuesto a Final para descargar el PDF"
+              aria-describedby="ayuda-pdf"
+            >
+              Descargar PDF
+            </button>
+          )}
+        </div>
       </div>
+      {!esFinal && (
+        <p id="ayuda-pdf" className="campo-ayuda ayuda-encabezado">
+          El PDF se puede descargar cuando el presupuesto está en estado Final.
+        </p>
+      )}
 
       {aviso && (
         <div className={`aviso aviso-${aviso.tipo}`} role={aviso.tipo === 'error' ? 'alert' : 'status'}>

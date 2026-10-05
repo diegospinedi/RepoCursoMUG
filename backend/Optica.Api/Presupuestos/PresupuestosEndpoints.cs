@@ -63,6 +63,19 @@ public static class PresupuestosEndpoints
                 ? Results.Ok(AVista(presupuesto))
                 : NoEncontrado(numero));
 
+        // RF-02, RF-36: PDF para descargar. Solo en estado Final (RF-09, AC-08).
+        grupo.MapGet("/{numero:int}/pdf", async (int numero, OpticaDbContext db) =>
+        {
+            var presupuesto = await db.Presupuestos.AsNoTracking().Include(p => p.Lineas).SingleOrDefaultAsync(p => p.Numero == numero);
+            if (presupuesto is null)
+                return NoEncontrado(numero);
+            if (presupuesto.Estado != EstadoPresupuesto.Final)
+                return Results.Problem($"El presupuesto {numero} está en Borrador: pasalo a Final para descargar el PDF.",
+                    statusCode: StatusCodes.Status409Conflict);
+
+            return Results.File(PdfPresupuesto.Generar(presupuesto), "application/pdf", $"Presupuesto-{numero}.pdf");
+        });
+
         grupo.MapPost("/", async (DatosPresupuesto datos, OpticaDbContext db, TimeProvider reloj) =>
         {
             var errores = ValidacionPresupuesto.Validar(datos);
