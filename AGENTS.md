@@ -19,10 +19,13 @@ de WSL está en `~/.dotnet` (instalado con `dotnet-install.sh`, en el `PATH` des
 
 Backend (API en `backend/Optica.Api`, solución `Optica.slnx`):
 ```bash
-dotnet tool restore                          # una sola vez: dotnet-ef 10 como herramienta local
-dotnet restore Optica.slnx
-dotnet ef database update --project backend/Optica.Api
-dotnet run --project backend/Optica.Api      # http://localhost:5220
+dotnet run --project backend/Optica.Api      # http://localhost:5220; crea la base o aplica las migraciones al arrancar
+```
+
+Para crear migraciones nuevas hace falta `dotnet-ef` (herramienta local del repo):
+```bash
+dotnet tool restore                          # una sola vez
+dotnet ef migrations add <Nombre> --project backend/Optica.Api -o Datos/Migraciones
 ```
 
 Frontend (`frontend/`):

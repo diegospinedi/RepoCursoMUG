@@ -63,10 +63,14 @@ var app = builder.Build();
 // Falla al arrancar si la configuración de ARCA no es válida, en lugar de hacerlo al facturar.
 app.Services.GetRequiredService<IServicioArca>();
 
-// WAL: las lecturas no bloquean a quien graba y viceversa (RNF-13). Queda guardado en el archivo de la base.
 using (var scope = app.Services.CreateScope())
 {
-    scope.ServiceProvider.GetRequiredService<OpticaDbContext>().Database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
+    var db = scope.ServiceProvider.GetRequiredService<OpticaDbContext>();
+    // Crea la base o la pone al día al arrancar: la app corre en una sola PC y así nadie
+    // tiene que acordarse de aplicar migraciones (ni instalar dotnet-ef) después de actualizar.
+    db.Database.Migrate();
+    // WAL: las lecturas no bloquean a quien graba y viceversa (RNF-13). Queda guardado en el archivo de la base.
+    db.Database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
 }
 
 if (app.Environment.IsDevelopment())
